@@ -45,7 +45,8 @@ api:
 .PHONY: build
 # build
 build:
-	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
+	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./... ; \
+  cp -rf configs bin/
 
 .PHONY: generate
 # generate
@@ -60,6 +61,14 @@ all:
 	make api;
 	make config;
 	make generate;
+
+.PHONY: set-env
+set-env:
+	docker-compose -f scripts/docker-compose.yaml up -d
+
+.PHONY: clean-env
+clean-env:
+	docker-compose -f scripts/docker-compose.yaml down
 
 # show help
 help:

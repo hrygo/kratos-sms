@@ -13,6 +13,9 @@ go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 kratos new server
 
 cd server
+go mod download
+go mod tidy
+
 # Add a proto template
 kratos proto add api/server/server.proto
 # Generate the proto code
