@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on AuthHead with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
+// Validate checks the field values on Authentication with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *AuthHead) Validate() error {
+func (m *Authentication) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on AuthHead with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in AuthHeadMultiError, or nil
-// if none found.
-func (m *AuthHead) ValidateAll() error {
+// ValidateAll checks the field values on Authentication with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in AuthenticationMultiError,
+// or nil if none found.
+func (m *Authentication) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *AuthHead) validate(all bool) error {
+func (m *Authentication) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -58,7 +58,7 @@ func (m *AuthHead) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetAppId()) != 16 {
-		err := AuthHeadValidationError{
+		err := AuthenticationValidationError{
 			field:  "AppId",
 			reason: "value length must be 16 runes",
 		}
@@ -70,7 +70,7 @@ func (m *AuthHead) validate(all bool) error {
 	}
 
 	if utf8.RuneCountInString(m.GetToken()) != 64 {
-		err := AuthHeadValidationError{
+		err := AuthenticationValidationError{
 			field:  "Token",
 			reason: "value length must be 64 runes",
 		}
@@ -82,18 +82,19 @@ func (m *AuthHead) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return AuthHeadMultiError(errors)
+		return AuthenticationMultiError(errors)
 	}
 
 	return nil
 }
 
-// AuthHeadMultiError is an error wrapping multiple validation errors returned
-// by AuthHead.ValidateAll() if the designated constraints aren't met.
-type AuthHeadMultiError []error
+// AuthenticationMultiError is an error wrapping multiple validation errors
+// returned by Authentication.ValidateAll() if the designated constraints
+// aren't met.
+type AuthenticationMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m AuthHeadMultiError) Error() string {
+func (m AuthenticationMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -102,11 +103,11 @@ func (m AuthHeadMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m AuthHeadMultiError) AllErrors() []error { return m }
+func (m AuthenticationMultiError) AllErrors() []error { return m }
 
-// AuthHeadValidationError is the validation error returned by
-// AuthHead.Validate if the designated constraints aren't met.
-type AuthHeadValidationError struct {
+// AuthenticationValidationError is the validation error returned by
+// Authentication.Validate if the designated constraints aren't met.
+type AuthenticationValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -114,22 +115,22 @@ type AuthHeadValidationError struct {
 }
 
 // Field function returns field value.
-func (e AuthHeadValidationError) Field() string { return e.field }
+func (e AuthenticationValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e AuthHeadValidationError) Reason() string { return e.reason }
+func (e AuthenticationValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e AuthHeadValidationError) Cause() error { return e.cause }
+func (e AuthenticationValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e AuthHeadValidationError) Key() bool { return e.key }
+func (e AuthenticationValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e AuthHeadValidationError) ErrorName() string { return "AuthHeadValidationError" }
+func (e AuthenticationValidationError) ErrorName() string { return "AuthenticationValidationError" }
 
 // Error satisfies the builtin error interface
-func (e AuthHeadValidationError) Error() string {
+func (e AuthenticationValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -141,14 +142,14 @@ func (e AuthHeadValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sAuthHead.%s: %s%s",
+		"invalid %sAuthentication.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = AuthHeadValidationError{}
+var _ error = AuthenticationValidationError{}
 
 var _ interface {
 	Field() string
@@ -156,7 +157,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = AuthHeadValidationError{}
+} = AuthenticationValidationError{}
 
 // Validate checks the field values on TextMessageRequest with the rules
 // defined in the proto definition for this message. If any rules are
@@ -181,11 +182,11 @@ func (m *TextMessageRequest) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetAuthHead()).(type) {
+		switch v := interface{}(m.GetAuth()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, TextMessageRequestValidationError{
-					field:  "AuthHead",
+					field:  "Auth",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -193,16 +194,16 @@ func (m *TextMessageRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, TextMessageRequestValidationError{
-					field:  "AuthHead",
+					field:  "Auth",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetAuthHead()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetAuth()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return TextMessageRequestValidationError{
-				field:  "AuthHead",
+				field:  "Auth",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -401,11 +402,11 @@ func (m *TemplateMessageRequest) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetAuthHead()).(type) {
+		switch v := interface{}(m.GetAuth()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, TemplateMessageRequestValidationError{
-					field:  "AuthHead",
+					field:  "Auth",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -413,16 +414,16 @@ func (m *TemplateMessageRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, TemplateMessageRequestValidationError{
-					field:  "AuthHead",
+					field:  "Auth",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetAuthHead()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetAuth()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return TemplateMessageRequestValidationError{
-				field:  "AuthHead",
+				field:  "Auth",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -650,11 +651,11 @@ func (m *AsyncResultQueryRequest) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetAuthHead()).(type) {
+		switch v := interface{}(m.GetAuth()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, AsyncResultQueryRequestValidationError{
-					field:  "AuthHead",
+					field:  "Auth",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -662,16 +663,16 @@ func (m *AsyncResultQueryRequest) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, AsyncResultQueryRequestValidationError{
-					field:  "AuthHead",
+					field:  "Auth",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetAuthHead()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetAuth()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return AsyncResultQueryRequestValidationError{
-				field:  "AuthHead",
+				field:  "Auth",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -769,22 +770,22 @@ var _ interface {
 	ErrorName() string
 } = AsyncResultQueryRequestValidationError{}
 
-// Validate checks the field values on ReplyHeader with the rules defined in
+// Validate checks the field values on ReplyStatus with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
 // error encountered is returned, or nil if there are no violations.
-func (m *ReplyHeader) Validate() error {
+func (m *ReplyStatus) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ReplyHeader with the rules defined in
+// ValidateAll checks the field values on ReplyStatus with the rules defined in
 // the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ReplyHeaderMultiError, or
+// result is a list of violation errors wrapped in ReplyStatusMultiError, or
 // nil if none found.
-func (m *ReplyHeader) ValidateAll() error {
+func (m *ReplyStatus) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ReplyHeader) validate(all bool) error {
+func (m *ReplyStatus) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -796,18 +797,18 @@ func (m *ReplyHeader) validate(all bool) error {
 	// no validation rules for Message
 
 	if len(errors) > 0 {
-		return ReplyHeaderMultiError(errors)
+		return ReplyStatusMultiError(errors)
 	}
 
 	return nil
 }
 
-// ReplyHeaderMultiError is an error wrapping multiple validation errors
-// returned by ReplyHeader.ValidateAll() if the designated constraints aren't met.
-type ReplyHeaderMultiError []error
+// ReplyStatusMultiError is an error wrapping multiple validation errors
+// returned by ReplyStatus.ValidateAll() if the designated constraints aren't met.
+type ReplyStatusMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ReplyHeaderMultiError) Error() string {
+func (m ReplyStatusMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -816,11 +817,11 @@ func (m ReplyHeaderMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ReplyHeaderMultiError) AllErrors() []error { return m }
+func (m ReplyStatusMultiError) AllErrors() []error { return m }
 
-// ReplyHeaderValidationError is the validation error returned by
-// ReplyHeader.Validate if the designated constraints aren't met.
-type ReplyHeaderValidationError struct {
+// ReplyStatusValidationError is the validation error returned by
+// ReplyStatus.Validate if the designated constraints aren't met.
+type ReplyStatusValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -828,22 +829,22 @@ type ReplyHeaderValidationError struct {
 }
 
 // Field function returns field value.
-func (e ReplyHeaderValidationError) Field() string { return e.field }
+func (e ReplyStatusValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ReplyHeaderValidationError) Reason() string { return e.reason }
+func (e ReplyStatusValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ReplyHeaderValidationError) Cause() error { return e.cause }
+func (e ReplyStatusValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ReplyHeaderValidationError) Key() bool { return e.key }
+func (e ReplyStatusValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ReplyHeaderValidationError) ErrorName() string { return "ReplyHeaderValidationError" }
+func (e ReplyStatusValidationError) ErrorName() string { return "ReplyStatusValidationError" }
 
 // Error satisfies the builtin error interface
-func (e ReplyHeaderValidationError) Error() string {
+func (e ReplyStatusValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -855,14 +856,14 @@ func (e ReplyHeaderValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sReplyHeader.%s: %s%s",
+		"invalid %sReplyStatus.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ReplyHeaderValidationError{}
+var _ error = ReplyStatusValidationError{}
 
 var _ interface {
 	Field() string
@@ -870,7 +871,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ReplyHeaderValidationError{}
+} = ReplyStatusValidationError{}
 
 // Validate checks the field values on SendMessageReply with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -895,11 +896,11 @@ func (m *SendMessageReply) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetHeader()).(type) {
+		switch v := interface{}(m.GetStatus()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, SendMessageReplyValidationError{
-					field:  "Header",
+					field:  "Status",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -907,16 +908,16 @@ func (m *SendMessageReply) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, SendMessageReplyValidationError{
-					field:  "Header",
+					field:  "Status",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetHeader()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetStatus()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return SendMessageReplyValidationError{
-				field:  "Header",
+				field:  "Status",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}
@@ -1026,11 +1027,11 @@ func (m *AsyncResultQueryReply) validate(all bool) error {
 	var errors []error
 
 	if all {
-		switch v := interface{}(m.GetHeader()).(type) {
+		switch v := interface{}(m.GetStatus()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
 				errors = append(errors, AsyncResultQueryReplyValidationError{
-					field:  "Header",
+					field:  "Status",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
@@ -1038,16 +1039,16 @@ func (m *AsyncResultQueryReply) validate(all bool) error {
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
 				errors = append(errors, AsyncResultQueryReplyValidationError{
-					field:  "Header",
+					field:  "Status",
 					reason: "embedded message failed validation",
 					cause:  err,
 				})
 			}
 		}
-	} else if v, ok := interface{}(m.GetHeader()).(interface{ Validate() error }); ok {
+	} else if v, ok := interface{}(m.GetStatus()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return AsyncResultQueryReplyValidationError{
-				field:  "Header",
+				field:  "Status",
 				reason: "embedded message failed validation",
 				cause:  err,
 			}

@@ -42,6 +42,7 @@ api:
  	       --validate_out=paths=source_relative,lang=go:./api \
 	       --openapi_out=fq_schema_naming=true,default_response=false:. \
 	       $(API_PROTO_FILES)
+#--openapi_out=fq_schema_naming=true,default_response=false,naming=proto:. \
 
 .PHONY: build
 # build
@@ -64,10 +65,12 @@ all:
 	make generate;
 
 .PHONY: set-env
+# setup db and cache in docker
 set-env:
 	docker-compose -f scripts/docker-compose.yaml up -d
 
 .PHONY: clean-env
+# stop containers
 clean-env:
 	docker-compose -f scripts/docker-compose.yaml down
 

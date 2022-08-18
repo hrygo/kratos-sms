@@ -33,7 +33,7 @@ service Sms {
 }
 
 // 认证头
-message AuthHead {
+message Authentication {
     // AppId
     string app_id = 1 [(validate.rules).string.len = 16];
     // AppId对应的访问令牌
@@ -43,7 +43,7 @@ message AuthHead {
 // 文本消息
 message TextMessageRequest {
     // 认证头
-    AuthHead auth_head = 1;
+    Authentication auth = 1;
     // 消息内容
     string content = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
     // 消息优先级
@@ -61,7 +61,7 @@ message TextMessageRequest {
 // 模板消息
 message TemplateMessageRequest {
     // 认证头
-    AuthHead auth_head = 1;
+    Authentication auth = 1;
     // 模板编号,如 "T00001", "TUOS01" 等
     string template_id = 2 [(validate.rules).string.len = 6];
     // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
@@ -85,13 +85,13 @@ message TemplateMessageRequest {
 // 异步查询发送结果
 message AsyncResultQueryRequest {
     // 认证头
-    AuthHead auth_head = 1;
+    Authentication auth = 1;
     // 查询编号
     uint64 query_id = 2 [(validate.rules).uint64.gt = 0];
 }
 
-// 响应消息公共头
-message ReplyHeader {
+// 响应消息公共状态头
+message ReplyStatus {
     // 状态码, 200 成功，其他失败
     int32 code = 1;
     // 状态描述信息
@@ -101,7 +101,7 @@ message ReplyHeader {
 // 发送消息的同步应答消息
 message SendMessageReply {
     // 响应消息头
-    ReplyHeader header = 1;
+    ReplyStatus status = 1;
     // 用于异步查询结果的查询编号，当code为零时值为0
     uint64 query_id = 2;
 }
@@ -109,7 +109,7 @@ message SendMessageReply {
 // 查询结果
 message AsyncResultQueryReply {
     // 响应消息头
-    ReplyHeader header = 1;
+    ReplyStatus status = 1;
     // 查询编号
     uint64 query_id = 2;
     // 查询结果列表

@@ -5,6 +5,8 @@ openapi: 3.0.3
 info:
     title: Sms API
     version: 0.0.1
+servers:
+  - url: http://localhost:8000
 paths:
     /sms/async/result/{queryId}:
         get:
@@ -19,12 +21,12 @@ paths:
                   schema:
                     type: integer
                     format: uint64
-                - name: authHead.appId
+                - name: auth.appId
                   in: query
                   description: AppId
                   schema:
                     type: string
-                - name: authHead.token
+                - name: auth.token
                   in: query
                   description: AppId对应的访问令牌
                   schema:
@@ -77,8 +79,8 @@ components:
         sms.v1.AsyncResultQueryReply:
             type: object
             properties:
-                header:
-                    $ref: '#/components/schemas/sms.v1.ReplyHeader'
+                status:
+                    $ref: '#/components/schemas/sms.v1.ReplyStatus'
                 queryId:
                     type: integer
                     description: 查询编号
@@ -121,7 +123,7 @@ components:
                 report:
                     type: string
                     description: 状态报告内容
-        sms.v1.AuthHead:
+        sms.v1.Authentication:
             type: object
             properties:
                 appId:
@@ -131,7 +133,7 @@ components:
                     type: string
                     description: AppId对应的访问令牌
             description: 认证头
-        sms.v1.ReplyHeader:
+        sms.v1.ReplyStatus:
             type: object
             properties:
                 code:
@@ -141,12 +143,12 @@ components:
                 message:
                     type: string
                     description: 状态描述信息
-            description: 响应消息公共头
+            description: 响应消息公共状态头
         sms.v1.SendMessageReply:
             type: object
             properties:
-                header:
-                    $ref: '#/components/schemas/sms.v1.ReplyHeader'
+                status:
+                    $ref: '#/components/schemas/sms.v1.ReplyStatus'
                 queryId:
                     type: integer
                     description: 用于异步查询结果的查询编号，当code为零时值为0
@@ -155,8 +157,8 @@ components:
         sms.v1.TemplateMessageRequest:
             type: object
             properties:
-                authHead:
-                    $ref: '#/components/schemas/sms.v1.AuthHead'
+                auth:
+                    $ref: '#/components/schemas/sms.v1.Authentication'
                 templateId:
                     type: string
                     description: 模板编号,如 "T00001", "TUOS01" 等
@@ -178,8 +180,8 @@ components:
         sms.v1.TextMessageRequest:
             type: object
             properties:
-                authHead:
-                    $ref: '#/components/schemas/sms.v1.AuthHead'
+                auth:
+                    $ref: '#/components/schemas/sms.v1.Authentication'
                 content:
                     type: string
                     description: 消息内容
