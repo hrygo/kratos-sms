@@ -3,37 +3,199 @@
 
 openapi: 3.0.3
 info:
-  title: Greeter API
-  description: The greeting service definition.
-  version: 0.0.1
+    title: Sms API
+    version: 0.0.1
 paths:
-  /helloworld/{name}:
-    get:
-      tags:
-        - Greeter
-        - subgroup
-      description: Sends a greeting
-      operationId: Greeter_SayHello
-      parameters:
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/helloworld.v1.HelloReply'
+    /sms/async/result/{queryId}:
+        get:
+            tags:
+                - Sms
+            operationId: Sms_AsyncResultQuery
+            parameters:
+                - name: queryId
+                  in: path
+                  description: 查询编号
+                  required: true
+                  schema:
+                    type: integer
+                    format: uint64
+                - name: authHead.appId
+                  in: query
+                  description: AppId
+                  schema:
+                    type: string
+                - name: authHead.token
+                  in: query
+                  description: AppId对应的访问令牌
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sms.v1.AsyncResultQueryReply'
+    /sms/send/template:
+        post:
+            tags:
+                - Sms
+            operationId: Sms_TemplateMessageSend
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/sms.v1.TemplateMessageRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sms.v1.SendMessageReply'
+    /sms/send/text:
+        post:
+            tags:
+                - Sms
+            operationId: Sms_TextMessageSend
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/sms.v1.TextMessageRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sms.v1.SendMessageReply'
 components:
-  schemas:
-    helloworld.v1.HelloReply:
-      type: object
-      properties:
-        message:
-          type: string
-      description: The response message containing the greetings
+    schemas:
+        sms.v1.AsyncResultQueryReply:
+            type: object
+            properties:
+                header:
+                    $ref: '#/components/schemas/sms.v1.ReplyHeader'
+                queryId:
+                    type: integer
+                    description: 查询编号
+                    format: uint64
+                results:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/sms.v1.AsyncResultQueryReply_ResultList'
+                    description: 查询结果列表
+            description: 查询结果
+        sms.v1.AsyncResultQueryReply_ResultList:
+            type: object
+            properties:
+                phone:
+                    type: string
+                    description: 手机号
+                sequenceId:
+                    type: integer
+                    description: 短信发送流水号
+                    format: uint64
+                result:
+                    type: integer
+                    description: 运营商网关响应
+                    format: uint32
+                msgId:
+                    type: string
+                    description: 运营商网关短信编号
+                sendTime:
+                    type: string
+                    description: 消息发送时间
+                    format: date-time
+                responseTime:
+                    type: string
+                    description: 运营商网关响应时间
+                    format: date-time
+                reportTime:
+                    type: string
+                    description: 状态报告接收到的时间
+                    format: date-time
+                report:
+                    type: string
+                    description: 状态报告内容
+        sms.v1.AuthHead:
+            type: object
+            properties:
+                appId:
+                    type: string
+                    description: AppId
+                token:
+                    type: string
+                    description: AppId对应的访问令牌
+            description: 认证头
+        sms.v1.ReplyHeader:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    description: 状态码, 200 成功，其他失败
+                    format: int32
+                message:
+                    type: string
+                    description: 状态描述信息
+            description: 响应消息公共头
+        sms.v1.SendMessageReply:
+            type: object
+            properties:
+                header:
+                    $ref: '#/components/schemas/sms.v1.ReplyHeader'
+                queryId:
+                    type: integer
+                    description: 用于异步查询结果的查询编号，当code为零时值为0
+                    format: uint64
+            description: 发送消息的同步应答消息
+        sms.v1.TemplateMessageRequest:
+            type: object
+            properties:
+                authHead:
+                    $ref: '#/components/schemas/sms.v1.AuthHead'
+                templateId:
+                    type: string
+                    description: 模板编号,如 "T00001", "TUOS01" 等
+                atTime:
+                    type: string
+                    description: 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
+                    format: date-time
+                phones:
+                    type: array
+                    items:
+                        type: string
+                    description: 手机号列表
+                args:
+                    type: object
+                    additionalProperties:
+                        type: string
+                    description: 模板占位符对应参数 key=占位符，value=替换值，如key="acc_no" value="6222020105063281"
+            description: 模板消息
+        sms.v1.TextMessageRequest:
+            type: object
+            properties:
+                authHead:
+                    $ref: '#/components/schemas/sms.v1.AuthHead'
+                content:
+                    type: string
+                    description: 消息内容
+                priority:
+                    type: integer
+                    description: 消息优先级
+                    format: int32
+                atTime:
+                    type: string
+                    description: 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
+                    format: date-time
+                phones:
+                    type: array
+                    items:
+                        type: string
+                    description: 手机号列表
+            description: 文本消息
 tags:
-  - name: Greeter
+    - name: Sms

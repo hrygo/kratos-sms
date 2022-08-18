@@ -3,7 +3,7 @@ version: "3"
 services:
   db:
     image: mariadb
-    restart: always
+    restart: on-failure
     ports:
       - "3306:3306"
     environment:
@@ -11,13 +11,14 @@ services:
       MARIADB_DATABASE: test
   redis:
     image: redis
-    restart: always
+    restart: on-failure
     ports:
       - "6379:6379"
   openapi:
+    image: swaggerapi/swagger-ui
+    restart: on-failure
     ports:
       - "8080:8080"
-    image: swaggerapi/swagger-ui
     volumes:
       - ${PWD}:/data
     environment:

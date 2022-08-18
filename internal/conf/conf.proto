@@ -4,7 +4,7 @@ package kratos.api;
 
 import "google/protobuf/duration.proto";
 
-option go_package = "kratos-shop/internal/conf;conf";
+option go_package = "kratos-sms/internal/conf;conf";
 
 message Bootstrap {
     Server server = 1;

@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package sms.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+
+option go_package = "kratos-sms/api/sms/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.sms.v1";
+
+service Sms {
+    rpc TextMessageSend (TextMessageRequest) returns (SendMessageReply) {
+        option (google.api.http) = {
+            post: "/sms/send/text"
+            body: "*"
+        };
+    }
+
+    rpc TemplateMessageSend (TemplateMessageRequest) returns (SendMessageReply) {
+        option (google.api.http) = {
+            post: "/sms/send/template"
+            body: "*"
+        };
+    }
+
+    rpc AsyncResultQuery (AsyncResultQueryRequest) returns (AsyncResultQueryReply) {
+        option (google.api.http) = {
+            get: "/sms/async/result/{query_id}",
+        };
+    }
+}
+
+// 认证头
+message AuthHead {
+    // AppId
+    string app_id = 1 [(validate.rules).string.len = 16];
+    // AppId对应的访问令牌
+    string token = 2 [(validate.rules).string.len = 64];
+}
+
+// 文本消息
+message TextMessageRequest {
+    // 认证头
+    AuthHead auth_head = 1;
+    // 消息内容
+    string content = 2 [(validate.rules).string = {min_len: 1, max_len: 255}];
+    // 消息优先级
+    int32 priority = 3 [(validate.rules).int32 = {gte: 0, lte: 9}];
+    // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
+    optional google.protobuf.Timestamp at_time = 4 [
+        (validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}
+    ];
+    // 手机号列表
+    repeated string phones = 21 [
+        (validate.rules).repeated = {unique: true, min_items: 1, max_items: 99}
+    ];
+}
+
+// 模板消息
+message TemplateMessageRequest {
+    // 认证头
+    AuthHead auth_head = 1;
+    // 模板编号,如 "T00001", "TUOS01" 等
+    string template_id = 2 [(validate.rules).string.len = 6];
+    // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
+    optional google.protobuf.Timestamp at_time = 3 [
+        (validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}
+    ];
+    // 手机号列表
+    repeated string phones = 21 [
+        (validate.rules).repeated = {unique: true, min_items: 1, max_items: 99}
+    ];
+    // 模板占位符对应参数 key=占位符，value=替换值，如key="acc_no" value="6222020105063281"
+    map<string, string> args = 22 [
+        (validate.rules).map = {
+            min_pairs: 1,
+            max_pairs: 16,
+            values: {string: {max_len: 64}}
+        }
+    ];
+}
+
+// 异步查询发送结果
+message AsyncResultQueryRequest {
+    // 认证头
+    AuthHead auth_head = 1;
+    // 查询编号
+    uint64 query_id = 2 [(validate.rules).uint64.gt = 0];
+}
+
+// 响应消息公共头
+message ReplyHeader {
+    // 状态码, 200 成功，其他失败
+    int32 code = 1;
+    // 状态描述信息
+    string message = 2;
+}
+
+// 发送消息的同步应答消息
+message SendMessageReply {
+    // 响应消息头
+    ReplyHeader header = 1;
+    // 用于异步查询结果的查询编号，当code为零时值为0
+    uint64 query_id = 2;
+}
+
+// 查询结果
+message AsyncResultQueryReply {
+    // 响应消息头
+    ReplyHeader header = 1;
+    // 查询编号
+    uint64 query_id = 2;
+    // 查询结果列表
+    repeated ResultList results = 21;
+
+    message ResultList {
+        // 手机号
+        string phone = 1;
+        // 短信发送流水号
+        uint64 sequence_id = 2;
+        // 运营商网关响应
+        uint32 result = 3;
+        // 运营商网关短信编号
+        string msg_id = 4;
+        // 消息发送时间
+        google.protobuf.Timestamp send_time = 5;
+        // 运营商网关响应时间
+        google.protobuf.Timestamp response_time = 6;
+        // 状态报告接收到的时间
+        optional google.protobuf.Timestamp report_time = 7;
+        // 状态报告内容
+        optional string report = 8;
+    }
+}
