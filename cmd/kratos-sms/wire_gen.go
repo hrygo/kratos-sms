@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/log"
 	"kratos-sms/internal/biz"
 	"kratos-sms/internal/conf"
@@ -19,14 +20,14 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(configConfig config.Config, confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
 	dataData, cleanup, err := data.NewData(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}
 	smsRepo := data.NewSmsRepo(dataData, logger)
 	smsUseCase := biz.NewSmsUseCase(smsRepo, logger)
-	smsService := service.NewSmsService(smsUseCase)
+	smsService := service.NewSmsService(configConfig, smsUseCase)
 	grpcServer := server.NewGRPCServer(confServer, smsService, logger)
 	httpServer := server.NewHTTPServer(confServer, smsService, logger)
 	app := newApp(logger, grpcServer, httpServer)

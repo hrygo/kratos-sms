@@ -53,7 +53,7 @@ message TextMessageRequest {
         (validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}
     ];
     // 手机号列表
-    repeated string phones = 21 [
+    repeated string phones = 10 [
         (validate.rules).repeated = {unique: true, min_items: 1, max_items: 99}
     ];
 }
@@ -69,11 +69,11 @@ message TemplateMessageRequest {
         (validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}
     ];
     // 手机号列表
-    repeated string phones = 21 [
+    repeated string phones = 10 [
         (validate.rules).repeated = {unique: true, min_items: 1, max_items: 99}
     ];
     // 模板占位符对应参数 key=占位符，value=替换值，如key="acc_no" value="6222020105063281"
-    map<string, string> args = 22 [
+    map<string, string> args = 11 [
         (validate.rules).map = {
             min_pairs: 1,
             max_pairs: 16,
@@ -113,7 +113,7 @@ message AsyncResultQueryReply {
     // 查询编号
     uint64 query_id = 2;
     // 查询结果列表
-    repeated ResultList results = 21;
+    repeated ResultList results = 10;
 
     message ResultList {
         // 手机号

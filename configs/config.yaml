@@ -13,3 +13,24 @@ data:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
     write_timeout: 0.2s
+
+log:
+  app_debug: true
+  default:
+    level: 0 # 0 debug, 1 info, 2 warn, 3 error, 4 d_panic, 5 panic, 6 fatal
+    filename: "all.log"
+    text_format: "JSON"
+    time_precision: "MILLISECOND"
+    max_size: 10
+    max_backups: 100
+    max_age: 7
+    compress: true
+  error:
+    level: 2
+    filename: "error.log"
+    text_format: "CONSOLE"
+    time_precision: "MILLISECOND"
+    max_size: 10
+    max_backups: 100
+    max_age: 7
+    compress: false

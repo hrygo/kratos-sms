@@ -17,58 +17,36 @@ type SmsRepo interface {
 }
 
 type SmsJournal struct {
-	// ID
-	Id uint64
-	// 服务端分配的AppId
-	AppId string
-	// 消息内容
-	Content string
-	// 消息优先级
-	Priority int32
-	// 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
-	AtTime time.Time
-	// 手机号列表
-	Phones []string
-	// 查询ID
-	QueryId uint64
-	// 状态码, 200 成功，其他
-	Code int32
-	// 状态描述信息
-	Message string
-	// 发送结果
-	Results []*AsyncResultList
+	Id       uint64             // ID
+	AppId    string             // 服务端分配的AppId
+	Content  string             // 消息内容
+	Priority int32              // 消息优先级
+	AtTime   time.Time          // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
+	Phones   []string           // 手机号列表
+	QueryId  uint64             // 查询ID
+	Code     int32              // 状态码, 200 成功，其他
+	Message  string             // 状态描述信息
+	Results  []*AsyncResultList // 发送结果
 }
 
 type AsyncResultList struct {
-	// 手机号
-	Phone string
-	// 短信发送流水号
-	SequenceId uint64
-	// 运营商网关响应
-	Result uint32
-	// 运营商网关短信编号
-	MsgId string
-	// 消息发送时间
-	SendTime time.Time
-	// 运营商网关响应时间
-	ResponseTime time.Time
-	// 状态报告接收到的时间
-	ReportTime time.Time
-	// 状态报告内容
-	Report string
+	Phone        string    // 手机号
+	SequenceId   uint64    // 短信发送流水号
+	Result       uint32    // 运营商网关响应
+	MsgId        string    // 运营商网关短信编号
+	SendTime     time.Time // 消息发送时间
+	ResponseTime time.Time // 运营商网关响应时间
+	ReportTime   time.Time // 状态报告接收到的时间
+	Report       string    // 状态报告内容
+
 }
 
 type SmsTemplate struct {
-	// ID
-	Id uint64
-	// 模板编号
-	TempId string
-	// 模板内容
-	Template string
-	// 优先级
-	Priority int32
-	// 禁止发送时段，数字含义为当前距离零点的秒数，两个数字一对，前者必须小于后者
-	ProhibitedPeriod []uint32
+	Id               uint64   // ID
+	TempId           string   // 模板编号
+	Template         string   // 模板内容
+	Priority         int32    // 优先级
+	ProhibitedPeriod []uint32 // 禁止发送时段，数字含义为当前距离零点的秒数，两个数字一对，前者必须小于后者
 }
 
 func (st *SmsTemplate) Parse(args map[string]string) string {

@@ -9,6 +9,7 @@ option go_package = "kratos-sms/internal/conf;conf";
 message Bootstrap {
     Server server = 1;
     Data data = 2;
+    Log log = 10;
 }
 
 message Server {
@@ -39,4 +40,55 @@ message Data {
     }
     Database database = 1;
     Redis redis = 2;
+}
+
+message Log {
+    // 默认日志文件
+    FileLog default = 1;
+    // 错误日志文件
+    FileLog error = 2;
+    // 是否为调试模式
+    bool app_debug = 10;
+
+    enum TextFormat {
+        JSON = 0;
+        CONSOLE = 1;
+    }
+
+    enum TimePrecision {
+        DEFAULT = 0;
+        MILLISECOND = 1;
+        SECOND = 2;
+    }
+
+    // 实际日志级别需减1后再使用
+    enum Level {
+        DEBUG = 0;
+        INFO = 1;
+        WARN = 2;
+        ERROR = 3;
+        // PanicLevel used in development log
+        D_PANIC = 4;
+        PANIC = 5;
+        FATAL = 6;
+    }
+
+    message FileLog {
+        // 日志级别，注意实际使用需减1
+        Level level = 1;
+        // 完整日志文件名，含路径
+        string filename = 2;
+        // 日志格式，可选值为 json 或 console
+        TextFormat text_format = 3;
+        // 时间戳精度，可选值为 second 或 millisecond
+        TimePrecision time_precision = 4;
+        // 单个文件的大小，单位MB
+        uint32 max_size = 5;
+        // 最大归档文件个数
+        uint32 max_backups = 6;
+        // 最大保留天数
+        uint32 max_age = 7;
+        // 是否启用压缩
+        bool compress = 8;
+    }
 }
