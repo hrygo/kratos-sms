@@ -116,14 +116,14 @@ func (uc *SmsUseCase) SendSmsWithJournal(ctx context.Context, req *pb.TextMessag
   jo := &SmsJournal{}
   properties.Copy(req, jo)
   jo.AtTime = req.AtTime.AsTime()
-  uc.log.WithContext(ctx).Debugw(properties.KVPairs(jo)...)
+  uc.log.WithContext(ctx).Debugw(properties.KVPairs(jo, "SMS.Jo.")...)
 
   // 2. 发送结果入库（异步）
   journal, err := uc.repo.SaveJournal(ctx, jo)
   if err != nil {
     return nil, err
   }
-  uc.log.WithContext(ctx).Debugw(properties.KVPairs(journal)...)
+  uc.log.WithContext(ctx).Debugw(properties.KVPairs(journal, "SMS.Jo.")...)
 
   // 3. 返回发送结果给service层
   reply := &pb.SendMessageReply{

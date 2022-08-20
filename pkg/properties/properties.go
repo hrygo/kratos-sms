@@ -40,7 +40,8 @@ type ObjectKeySet interface {
 }
 
 // KVPairs `source` 的属性名与Keys()集合相同的属性，组成kv对，返回切片的奇数位置为key，偶数位置为value
-func KVPairs(source ObjectKeySet) []any {
+// prefix 为 Key 增加前缀
+func KVPairs(source ObjectKeySet, prefix string) []any {
   keys := source.Keys()
   if len(keys) < 1 {
     return []any{}
@@ -61,7 +62,7 @@ func KVPairs(source ObjectKeySet) []any {
     if ok {
       val := fromElem.FieldByName(keys[i])
       if !val.IsZero() {
-        pairs = append(pairs, keys[i])
+        pairs = append(pairs, prefix+keys[i])
         pairs = append(pairs, Sprint(fromElem.FieldByName(keys[i])))
       }
     }
@@ -77,12 +78,6 @@ func Sprint(v reflect.Value) string {
   case reflect.Ptr, reflect.Struct:
     return fmt.Sprintf("%+v", v)
   default:
-    {
-      // 数值类型
-      if v.CanUint() || v.CanInt() || v.CanFloat() || v.CanComplex() {
-        return fmt.Sprint(v)
-      }
-      return v.String()
-    }
+    return fmt.Sprint(v)
   }
 }
