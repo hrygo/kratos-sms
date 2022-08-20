@@ -68,14 +68,14 @@ all:
 # setup db and cache in docker
 set-env:
 	docker-compose -f deploy/db/docker-compose.yaml up -d ; \
-  brew services start hashicorp/tap/consul ; echo "http://localhost:8500/ui" ;  \
+  brew services restart consul ; echo "http://localhost:8500/ui" ;  \
   brew services restart etcd ;
 
 .PHONY: clean-env
 # stop containers
 clean-env:
 	docker-compose -f deploy/db/docker-compose.yaml down ; \
-  brew services stop hashicorp/tap/consul ; \
+  brew services stop consul ; \
   brew services stop etcd ;
 
 # show help
