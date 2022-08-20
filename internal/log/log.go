@@ -8,6 +8,7 @@ import (
   "sync"
   "time"
 
+  "github.com/fatih/color"
   "github.com/go-kratos/kratos/v2/log"
   "go.uber.org/zap"
   "go.uber.org/zap/zapcore"
@@ -27,6 +28,10 @@ type Logger struct {
 func (l Logger) Reset(log *zap.Logger) {
   l.log = log
 }
+
+const Separator = " | "
+
+var callerColor = color.New(color.FgHiBlue).Add(color.Underline)
 
 func (l Logger) Log(level log.Level, pairs ...interface{}) error {
   if len(pairs) == 0 || len(pairs)&0x1 != 0 {
@@ -55,10 +60,17 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
       if !ok {
         value = fmt.Sprint(pairs[i+1])
       }
-      sb.WriteString(key)
-      sb.WriteString("=\"")
+      if i > 0 { // caller 不添加 key
+        sb.WriteString(key)
+        sb.WriteString("=")
+      }
+      if i == 0 {
+        value = fmt.Sprintf("%-32s", callerColor.Sprintf("%s", value))
+      }
       sb.WriteString(value)
-      sb.WriteString("\"\t")
+      if i != len(pairs)-2 { // 最后一段不加分隔符
+        sb.WriteString(Separator)
+      }
     } else {
       if ok {
         data = append(data, zap.String(key, value))
@@ -103,7 +115,7 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
   return nil
 }
 
-var std = New(os.Stdout, DebugLevel, conf.Log_RFC3339, WithCaller(false), zap.AddStacktrace(ErrorLevel))
+var std = New(os.Stdout, DebugLevel, conf.Log_RFC3339, zap.AddStacktrace(ErrorLevel))
 var defaultLogger = &Logger{std}
 
 func Default() *Logger {
@@ -117,7 +129,7 @@ func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
     bootstrap = bs
     // Debug 模式如果开启，不接受自定义配置
     if bs.AppDebug {
-      ResetDefault(New(os.Stdout, DebugLevel, conf.Log_RFC3339, WithCaller(false), zap.AddStacktrace(ErrorLevel)))
+      ResetDefault(New(os.Stdout, DebugLevel, conf.Log_RFC3339, zap.AddStacktrace(ErrorLevel)))
       return
     }
     var defaultLog = bs.Log.Default
@@ -211,7 +223,7 @@ func New(writer io.Writer, level Level, tf conf.Log_TimeFormat, opts ...Option) 
   cfg.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
     timeFormat(tf, &t, enc)
   }
-  cfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+  cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
   cfg.EncoderConfig.TimeKey = "ts"
   cfg.EncoderConfig.MessageKey = "_zap"
 
