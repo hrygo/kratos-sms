@@ -7,9 +7,11 @@ import "google/protobuf/duration.proto";
 option go_package = "kratos-sms/internal/conf;conf";
 
 message Bootstrap {
-    Server server = 1;
-    Data data = 2;
-    Log log = 10;
+    bool app_debug = 1;
+    Server server = 2;
+    Data data = 3;
+    Log log = 4;
+    Consul consul = 5;
 }
 
 message Server {
@@ -91,4 +93,37 @@ message Log {
         // 是否启用压缩
         bool compress = 8;
     }
+}
+
+message Consul {
+    // Address is the address of the Consul server
+    string address = 1;
+    // Config Key path, must hash file suffix, e.g. yaml/json
+    string path = 2;
+    // Scheme is the URI scheme for the Consul server
+    optional string scheme = 10;
+    // Prefix for URIs for when consul is behind an API gateway (reverse
+    // proxy).  The API gateway must strip off the PathPrefix before
+    // passing the request onto consul.
+    optional string path_prefix = 11;
+    // Datacenter to use. If not provided, the default agent datacenter is used.
+    optional string datacenter = 12;
+    // HttpAuth is the auth info to use for http access.
+    optional HttpBasicAuth http_auth = 13;
+    // WaitTime limits how long a Watch will block. If not provided,
+    // the agent default values will be used.
+    optional google.protobuf.Duration wait_time = 14;
+    // Token is used to provide a per-request ACL token
+    // which overrides the agent's default token.
+    optional string token = 15;
+    // Namespace is the name of the namespace to send along for the request
+    // when no other Namespace is present in the QueryOptions
+    optional string namespace = 16;
+}
+
+message HttpBasicAuth {
+    // Username to use for HTTP Basic Authentication
+    string username = 1;
+    // Password to use for HTTP Basic Authentication
+    string password = 2;
 }

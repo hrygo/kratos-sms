@@ -78,13 +78,14 @@ var std = New(os.Stdout, DebugLevel, WithCaller(false), zap.AddStacktrace(ErrorL
 
 // ProductionDefault 设置默认生产日志策略
 // 参照此方法根据需要自己修改合适的日志参数, 编写自己的初始化方法
-func ProductionDefault(bs *conf.Log, opts ...Option) {
+func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
+	// Debug 模式如果开启，不接受自定义配置
 	if bs.AppDebug {
 		ResetDefault(New(os.Stdout, DebugLevel, WithCaller(false), zap.AddStacktrace(ErrorLevel)))
 		return
 	}
-	var defaultLog = bs.Default
-	var errorLog = bs.Error
+	var defaultLog = bs.Log.Default
+	var errorLog = bs.Log.Error
 	var tops = []TeeOption{
 		// 默认JSON格式
 		{
@@ -139,8 +140,8 @@ func NewTeeWithRotate(tops []TeeOption, opts ...Option) *zap.Logger {
 	var cores []zapcore.Core
 	cfg := zap.NewProductionConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	cfg.EncoderConfig.TimeKey = "created_at"
-	cfg.EncoderConfig.MessageKey = "zap"
+	cfg.EncoderConfig.TimeKey = "ts"
+	cfg.EncoderConfig.MessageKey = "_zap"
 
 	for _, top := range tops {
 		top := top
@@ -179,8 +180,8 @@ func New(writer io.Writer, level Level, opts ...Option) *zap.Logger {
 		timeFormat(conf.Log_MILLISECOND, &t, enc)
 	}
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	cfg.EncoderConfig.TimeKey = "created_at"
-	cfg.EncoderConfig.MessageKey = "zap"
+	cfg.EncoderConfig.TimeKey = "ts"
+	cfg.EncoderConfig.MessageKey = "_zap"
 
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(cfg.EncoderConfig),

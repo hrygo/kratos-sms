@@ -44,23 +44,32 @@ func init() {
 func main() {
 	flag.Parse()
 
-	// c, bc, closeFunc := fileConfig()
-	c, bc, closeFunc := consulConfig()
+	// 1. 从配置文件读取配置
+	c, bc, closeFunc := fileConfig()
 	defer closeFunc()
+
+	// 2. 如果有配置Consul，则采用Consul配置覆盖本地配置
+	if bc.Consul != nil && bc.Consul.Address != "" {
+		closeFunc()
+		c, bc, closeFunc = consulConfig(bc.Consul)
+		defer closeFunc()
+	}
 	if bc == nil || bc.Server == nil || bc.Log == nil || bc.Data == nil {
 		os.Exit(-1)
 	}
 
-	logger := customLogger(c, bc.Log)
+	// 3. 设置日志
+	logger := customLogger(c, bc)
 	defer mylog.Sync()
 
+	// 4. 装配APP
 	app, cleanup, err := wireApp(c, bc.Server, bc.Data, logger)
 	if err != nil {
 		panic(err)
 	}
 	defer cleanup()
 
-	// start and wait for stop signal
+	// 5. Start and wait for stop signal
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
@@ -80,8 +89,8 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
 	)
 }
 
-func customLogger(c config.Config, lc *conf.Log) log.Logger {
-	resetLogger(lc)
+func customLogger(c config.Config, bs *conf.Bootstrap) log.Logger {
+	resetLogger(bs)
 	logger := log.With(mylog.Default(),
 		"caller", log.DefaultCaller,
 		"service.id", id,
@@ -91,21 +100,23 @@ func customLogger(c config.Config, lc *conf.Log) log.Logger {
 		"span.id", tracing.SpanID(),
 	)
 
+	// 添加日志配置变化监听函数
 	_ = c.Watch("log", func(key string, value config.Value) {
-		err := value.Scan(lc)
+		err := value.Scan(bs.Log)
 		if err != nil {
 			mylog.Errorf(err.Error())
 			return
 		}
-		resetLogger(lc)
+		resetLogger(bs)
 		// TODO logger的私有成员(.logger) 如何改变？如不能改变，则日志重置其实是失效的
-		mylog.Warnf("logger was reset!")
+		mylog.Warnf("logger configuration has been changed!")
 	})
+
 	return logger
 }
 
-func resetLogger(lc *conf.Log) {
-	mylog.ProductionDefault(lc,
+func resetLogger(bs *conf.Bootstrap) {
+	mylog.ProductionDefault(bs,
 		zap.AddStacktrace(mylog.ErrorLevel),
 		zap.Hooks(),
 	)
@@ -118,7 +129,6 @@ func fileConfig() (config.Config, *conf.Bootstrap, func()) {
 			file.NewSource(confPath),
 		),
 	)
-	defer func() { _ = c.Close() }()
 
 	if err := c.Load(); err != nil {
 		panic(err)
@@ -131,15 +141,22 @@ func fileConfig() (config.Config, *conf.Bootstrap, func()) {
 	return c, &bc, func() { _ = c.Close() }
 }
 
-// 从Consul读取配置
-func consulConfig() (config.Config, *conf.Bootstrap, func()) {
-	// 注意consul里面配置的名称，必须有后缀，否则无法正确解析
-	var path = "kratos/sms.yaml"
-	consulClient, err := api.NewClient(&api.Config{
-		Address: "127.0.0.1:8500",
-	})
+// 从Consul读取配置, 注意consul里面配置的名称，必须有后缀，否则无法正确解析
+func consulConfig(cc *conf.Consul) (config.Config, *conf.Bootstrap, func()) {
+	apic := &api.Config{
+		Address: cc.GetAddress(),
+		Scheme:  cc.GetScheme(),
+	}
+	if cc.WaitTime != nil {
+		apic.WaitTime = cc.WaitTime.AsDuration()
+	}
+	consulClient, err := api.NewClient(apic)
 	if err != nil {
 		panic(err)
+	}
+	var path = "kratos/application.yaml"
+	if cc.Path != "" {
+		path = cc.Path
 	}
 	cs, err := consul.New(
 		consulClient,

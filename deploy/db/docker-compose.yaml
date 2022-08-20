@@ -3,7 +3,7 @@ version: "3"
 services:
   db:
     image: mariadb
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - "3306:3306"
     environment:
@@ -11,15 +11,15 @@ services:
       MARIADB_DATABASE: test
   redis:
     image: redis
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - "6379:6379"
-  openapi:
-    image: swaggerapi/swagger-ui
-    restart: on-failure
-    ports:
-      - "8080:8080"
-    volumes:
-      - ${PWD}:/data
-    environment:
-      SWAGGER_JSON: /data/openapi.yaml
+  # openapi:
+  #   image: swaggerapi/swagger-ui
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ${PWD}:/data
+  #   environment:
+  #     SWAGGER_JSON: /data/openapi.yaml
