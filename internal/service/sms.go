@@ -4,6 +4,7 @@ import (
   "context"
 
   "github.com/go-kratos/kratos/v2/config"
+  "github.com/go-kratos/kratos/v2/log"
 
   pb "kratos-sms/api/sms/v1"
   "kratos-sms/internal/biz"
@@ -13,10 +14,11 @@ type SmsService struct {
   pb.UnimplementedSmsServer
   conf config.Config
   uc   *biz.SmsUseCase
+  log  *log.Helper
 }
 
-func NewSmsService(conf config.Config, uc *biz.SmsUseCase) *SmsService {
-  return &SmsService{conf: conf, uc: uc}
+func NewSmsService(conf config.Config, uc *biz.SmsUseCase, l log.Logger) *SmsService {
+  return &SmsService{conf: conf, uc: uc, log: log.NewHelper(l)}
 }
 
 func (s *SmsService) TextMessageSend(ctx context.Context, req *pb.TextMessageRequest) (*pb.SendMessageReply, error) {

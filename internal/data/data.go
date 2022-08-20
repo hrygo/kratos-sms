@@ -20,6 +20,7 @@ var ProviderSet = wire.NewSet(NewData, NewSmsRepo)
 // Data saved to database
 type Data struct {
   client *mongo.Client
+  log    *log.Helper
 }
 
 // NewData .
@@ -71,7 +72,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
     l.Info("Closing the data resources")
   }
 
-  return &Data{client: client}, cleanup, nil
+  return &Data{client: client, log: l}, cleanup, nil
 }
 
 func (d *Data) Collection(db, coll string) *mongo.Collection {

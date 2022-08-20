@@ -6,13 +6,13 @@ import (
   "github.com/go-kratos/kratos/v2/middleware/validate"
   "github.com/go-kratos/kratos/v2/transport/grpc"
 
-  v1 "kratos-sms/api/sms/v1"
+  sms "kratos-sms/api/sms/v1"
   "kratos-sms/internal/conf"
   "kratos-sms/internal/service"
 )
 
 // NewGRPCServer new gRPC server.
-func NewGRPCServer(c *conf.Server, sms *service.SmsService, logger log.Logger) *grpc.Server {
+func NewGRPCServer(c *conf.Server, service *service.SmsService, logger log.Logger) *grpc.Server {
   var opts = []grpc.ServerOption{
     grpc.Middleware(
       recovery.Recovery(),
@@ -29,6 +29,8 @@ func NewGRPCServer(c *conf.Server, sms *service.SmsService, logger log.Logger) *
     opts = append(opts, grpc.Timeout(c.Grpc.Timeout.AsDuration()))
   }
   srv := grpc.NewServer(opts...)
-  v1.RegisterSmsServer(srv, sms)
+  sms.RegisterSmsServer(srv, service)
+
+  log.NewHelper(logger).Debug("Create gRPC Server.")
   return srv
 }

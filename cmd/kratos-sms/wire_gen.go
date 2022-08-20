@@ -27,7 +27,7 @@ func wireApp(configConfig config.Config, confServer *conf.Server, confData *conf
 	}
 	smsRepo := data.NewSmsRepo(dataData, logger)
 	smsUseCase := biz.NewSmsUseCase(smsRepo, logger)
-	smsService := service.NewSmsService(configConfig, smsUseCase)
+	smsService := service.NewSmsService(configConfig, smsUseCase, logger)
 	grpcServer := server.NewGRPCServer(confServer, smsService, logger)
 	httpServer := server.NewHTTPServer(confServer, smsService, logger)
 	app := newApp(logger, grpcServer, httpServer)

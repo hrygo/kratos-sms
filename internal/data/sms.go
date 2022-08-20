@@ -30,7 +30,7 @@ func (s *smsRepo) SaveJournal(ctx context.Context, jo *biz.SmsJournal) (*biz.Sms
   ictx, cancel := context.WithTimeout(ctx, time.Second)
   defer cancel()
 
-  result, err := s.Journal().InsertOne(ictx, jo)
+  result, err := s.journal().InsertOne(ictx, jo)
   if err != nil {
     s.log.WithContext(ictx).Error(err)
     return nil, err
@@ -52,10 +52,14 @@ func (s *smsRepo) FindTemplate(ctx context.Context, tempId string) (*biz.SmsTemp
   panic("implement me")
 }
 
-func (s *smsRepo) Journal() *mongo.Collection {
+func (s *smsRepo) journal() *mongo.Collection {
   return s.data.Collection("sms", "journal")
 }
 
-func (s *smsRepo) Template() *mongo.Collection {
+func (s *smsRepo) template() *mongo.Collection {
   return s.data.Collection("sms", "template")
+}
+
+func (s *smsRepo) auth() *mongo.Collection {
+  return s.data.Collection("sms", "auth")
 }

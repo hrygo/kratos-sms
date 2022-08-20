@@ -103,21 +103,41 @@ func customLogger(c config.Config, bs *conf.Bootstrap) log.Logger {
   )
 
   // 添加日志配置变化监听函数
-  _ = c.Watch("log", func(key string, value config.Value) {
+  _ = c.Watch("log", observerLog(bs))
+  // 添加日志配置变化监听函数
+  _ = c.Watch("app_debug", observerDebugMode(bs))
+
+  return logger
+}
+
+func observerLog(bs *conf.Bootstrap) func(key string, value config.Value) {
+  return func(key string, value config.Value) {
     err := value.Scan(bs.Log)
     if err != nil {
       mylog.Errorf(err.Error())
       return
     }
     resetLogger(bs)
-    // TODO logger的私有成员(.logger) 如何改变？如不能改变，则日志重置其实是失效的
     mylog.Warnf("logger configuration has been changed!")
-  })
-
-  return logger
+  }
 }
 
-// 如果开启了调试模式，重置不会生效
+func observerDebugMode(bs *conf.Bootstrap) func(key string, value config.Value) {
+  return func(key string, value config.Value) {
+    mode, err := value.Bool()
+    if err != nil {
+      mylog.Errorf(err.Error())
+      return
+    }
+    bs.AppDebug = mode
+    resetLogger(bs)
+    mylog.Warnf("App debug mode changed to %v!", mode)
+    // TODO MORE
+  }
+}
+
+// TODO 1.重置后原来的 logger 并没有没销毁，此问题如何解决？
+// TODO 2.采用 kratos 的 filter 方式来动态修改日志配置？
 func resetLogger(bs *conf.Bootstrap) {
   mylog.ProductionDefault(bs,
     zap.AddStacktrace(mylog.ErrorLevel),

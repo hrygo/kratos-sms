@@ -2,12 +2,14 @@ package biz
 
 import (
   "context"
+  "encoding/json"
   "strings"
   "time"
 
   "github.com/go-kratos/kratos/v2/log"
 
   pb "kratos-sms/api/sms/v1"
+  "kratos-sms/pkg/properties"
 )
 
 type SmsRepo interface {
@@ -16,37 +18,46 @@ type SmsRepo interface {
   FindTemplate(ctx context.Context, tempId string) (*SmsTemplate, error)
 }
 
+type SmsUseCase struct {
+  repo SmsRepo
+  log  *log.Helper
+}
+
+func NewSmsUseCase(repo SmsRepo, logger log.Logger) *SmsUseCase {
+  return &SmsUseCase{repo: repo, log: log.NewHelper(logger)}
+}
+
 type SmsJournal struct {
-  Id       string             // ID
-  AppId    string             // 服务端分配的AppId
-  Content  string             // 消息内容
-  Priority int32              // 消息优先级
-  AtTime   time.Time          // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
-  Phones   []string           // 手机号列表
-  QueryId  uint64             // 查询ID
-  Code     int32              // 状态码, 200 成功，其他
-  Message  string             // 状态描述信息
-  Results  []*AsyncResultList // 发送结果
+  Id       string             `bson:"_id,omitempty"`      // ID
+  AppId    string             `bson:"appId,omitempty"`    // 服务端分配的AppId
+  Content  string             `bson:"content,omitempty"`  // 消息内容
+  Priority int32              `bson:"priority,omitempty"` // 消息优先级
+  AtTime   time.Time          `bson:"ts,omitempty"`       // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
+  Phones   []string           `bson:"phones,omitempty"`   // 手机号列表
+  QueryId  uint64             `bson:"queryId,omitempty"`  // 查询ID
+  Code     int32              `bson:"code,omitempty"`     // 状态码, 200 成功，其他
+  Message  string             `bson:"message,omitempty"`  // 状态描述信息
+  Results  []*AsyncResultList `bson:"results,omitempty"`  // 发送结果
 }
 
 type AsyncResultList struct {
-  Phone        string    // 手机号
-  SequenceId   uint64    // 短信发送流水号
-  Result       uint32    // 运营商网关响应
-  MsgId        string    // 运营商网关短信编号
-  SendTime     time.Time // 消息发送时间
-  ResponseTime time.Time // 运营商网关响应时间
-  ReportTime   time.Time // 状态报告接收到的时间
-  Report       string    // 状态报告内容
+  Phone        string    `bson:"phone,omitempty"`        // 手机号
+  SequenceId   uint64    `bson:"sequenceId,omitempty"`   // 短信发送流水号
+  Result       uint32    `bson:"result,omitempty"`       // 运营商网关响应
+  MsgId        string    `bson:"msgId,omitempty"`        // 运营商网关短信编号
+  SendTime     time.Time `bson:"sendTime,omitempty"`     // 消息发送时间
+  ResponseTime time.Time `bson:"responseTime,omitempty"` // 运营商网关响应时间
+  ReportTime   time.Time `bson:"reportTime,omitempty"`   // 状态报告接收到的时间
+  Report       string    `bson:"report,omitempty"`       // 状态报告内容
 
 }
 
 type SmsTemplate struct {
-  Id               uint64   // ID
-  TempId           string   // 模板编号
-  Template         string   // 模板内容
-  Priority         int32    // 优先级
-  ProhibitedPeriod []uint32 // 禁止发送时段，数字含义为当前距离零点的秒数，两个数字一对，前者必须小于后者
+  Id               uint64   `bson:"_id,omitempty"`              // ID
+  TempId           string   `bson:"tempId,omitempty"`           // 模板编号
+  Template         string   `bson:"template,omitempty"`         // 模板内容
+  Priority         int32    `bson:"priority,omitempty"`         // 优先级
+  ProhibitedPeriod []uint32 `bson:"prohibitedPeriod,omitempty"` // 禁止发送时段，数字含义为当前距离零点的秒数，两个数字一对，前者必须小于后者
 }
 
 func (st *SmsTemplate) Parse(args map[string]string) string {
@@ -71,23 +82,14 @@ func (st *SmsTemplate) Allowed() (allow bool) {
   return
 }
 
-type SmsUseCase struct {
-  repo SmsRepo
-  log  *log.Helper
-}
-
-func NewSmsUseCase(repo SmsRepo, logger log.Logger) *SmsUseCase {
-  return &SmsUseCase{repo: repo, log: log.NewHelper(logger)}
-}
-
 // SendSmsWithJournal 由Service层调用该方法
 func (uc *SmsUseCase) SendSmsWithJournal(ctx context.Context, req *pb.TextMessageRequest) (*pb.SendMessageReply, error) {
   // 1. 调用短信网关的接口发送短信
-  uc.log.WithContext(ctx).Debugf("send sms: %v", req)
+  logTxt, _ := json.Marshal(req)
+  uc.log.WithContext(ctx).Debugw("text_sms_request", string(logTxt))
   // send result to journal
-  jo := &SmsJournal{
-    QueryId: 1,
-  }
+  jo := &SmsJournal{}
+  properties.Copy(req, jo)
 
   // 2. 发送结果入库（异步）
   journal, err := uc.repo.SaveJournal(ctx, jo)

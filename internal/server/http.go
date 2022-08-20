@@ -6,13 +6,13 @@ import (
   "github.com/go-kratos/kratos/v2/middleware/validate"
   "github.com/go-kratos/kratos/v2/transport/http"
 
-  v1 "kratos-sms/api/sms/v1"
+  sms "kratos-sms/api/sms/v1"
   "kratos-sms/internal/conf"
   "kratos-sms/internal/service"
 )
 
 // NewHTTPServer new HTTP server.
-func NewHTTPServer(c *conf.Server, sms *service.SmsService, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, service *service.SmsService, logger log.Logger) *http.Server {
   var opts = []http.ServerOption{
     http.Middleware(
       recovery.Recovery(),
@@ -29,6 +29,8 @@ func NewHTTPServer(c *conf.Server, sms *service.SmsService, logger log.Logger) *
     opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
   }
   srv := http.NewServer(opts...)
-  v1.RegisterSmsHTTPServer(srv, sms)
+  sms.RegisterSmsHTTPServer(srv, service)
+
+  log.NewHelper(logger).Debug("Create HTTP Server.")
   return srv
 }

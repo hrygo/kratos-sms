@@ -54,9 +54,9 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
     }
     if bootstrap.AppDebug {
       sb.WriteString(key)
-      sb.WriteString("=\"")
+      sb.WriteByte('=')
       sb.WriteString(value)
-      sb.WriteString("\"\t")
+      sb.WriteByte('\t')
     } else {
       data = append(data, zap.String(key, value))
     }
@@ -97,10 +97,6 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
   return nil
 }
 
-func Default() *Logger {
-  return &Logger{std}
-}
-
 // 使用注意事项：
 // 1. 环境变量 CONF_LOG_TIME_FORMAT 用于设置日期格式，默认为: 2006-01-02T15:04:05.000
 // 2. 生产环境日志策略需调用 ProductionDefault 来设置，或者参照此方法根据需要自己修改合适的日志参数
@@ -114,8 +110,7 @@ var std = New(os.Stdout, DebugLevel, WithCaller(false), zap.AddStacktrace(ErrorL
 
 // ProductionDefault 设置默认生产日志策略
 // 参照此方法根据需要自己修改合适的日志参数, 编写自己的初始化方法
-func ProductionDefault(bs *conf.Bootstrap, opts ...
-  Option) {
+func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
   bootstrap = bs
   // Debug 模式如果开启，不接受自定义配置
   if bs.AppDebug {
@@ -245,9 +240,17 @@ func Sync() {
   }
 }
 
+var defaultLogger = &Logger{std}
+
+func Default() *Logger {
+  return defaultLogger
+}
+
 // ResetDefault not safe for concurrent use
 func ResetDefault(l *zap.Logger) {
+  Sync()
   std = l
+  defaultLogger.log = std
 
   Info = std.Info
   Warn = std.Warn
