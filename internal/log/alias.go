@@ -2,9 +2,14 @@ package log
 
 import (
   "go.uber.org/zap"
+  "go.uber.org/zap/zapcore"
 )
 
 // function variables for all field types in github.com/uber-go/zap/field.go
+
+type Level = zapcore.Level
+type Field = zap.Field
+type Option = zap.Option
 
 const (
   InfoLevel   = zap.InfoLevel   // 0, default level

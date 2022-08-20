@@ -56,16 +56,18 @@ func main() {
     defer closeFunc()
   }
   if bc == nil || bc.Server == nil || bc.Log == nil || bc.Data == nil {
-    log.Fatal("App will stop because the necessary configuration information is missing!")
+    log.Fatal("App will exit, because the necessary configuration information is missing!")
     os.Exit(-1)
   }
+  // 为 app_debug 变化增加观察者
+  _ = c.Watch("app_debug", observerDebugMode(bc))
 
   // 3. 设置日志
-  logger := customLogger(c, bc)
+  logger := customLogger(bc)
   defer mylog.Sync()
 
   // 4. 装配APP
-  app, cleanup, err := wireApp(c, bc.Server, bc.Data, logger)
+  app, cleanup, err := wireApp(c, bc, logger)
   if err != nil {
     panic(err)
   }
@@ -91,8 +93,11 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
   )
 }
 
-func customLogger(c config.Config, bs *conf.Bootstrap) log.Logger {
-  resetLogger(bs)
+func customLogger(bs *conf.Bootstrap) log.Logger {
+  mylog.ProductionDefault(bs,
+    zap.AddStacktrace(mylog.ErrorLevel),
+    zap.Hooks(), // 此处可以添加回调钩子，用于日志同步ElasticSearch等操作
+  )
   logger := log.With(mylog.Default(),
     "caller", log.DefaultCaller,
     "service.id", id,
@@ -102,24 +107,7 @@ func customLogger(c config.Config, bs *conf.Bootstrap) log.Logger {
     "span.id", tracing.SpanID(),
   )
 
-  // 添加日志配置变化监听函数
-  _ = c.Watch("log", observerLog(bs))
-  // 添加日志配置变化监听函数
-  _ = c.Watch("app_debug", observerDebugMode(bs))
-
   return logger
-}
-
-func observerLog(bs *conf.Bootstrap) func(key string, value config.Value) {
-  return func(key string, value config.Value) {
-    err := value.Scan(bs.Log)
-    if err != nil {
-      mylog.Errorf(err.Error())
-      return
-    }
-    resetLogger(bs)
-    mylog.Warnf("logger configuration has been changed!")
-  }
 }
 
 func observerDebugMode(bs *conf.Bootstrap) func(key string, value config.Value) {
@@ -130,19 +118,9 @@ func observerDebugMode(bs *conf.Bootstrap) func(key string, value config.Value) 
       return
     }
     bs.AppDebug = mode
-    resetLogger(bs)
     mylog.Warnf("App debug mode changed to %v!", mode)
     // TODO MORE
   }
-}
-
-// TODO 1.重置后原来的 logger 并没有没销毁，此问题如何解决？
-// TODO 2.采用 kratos 的 filter 方式来动态修改日志配置？
-func resetLogger(bs *conf.Bootstrap) {
-  mylog.ProductionDefault(bs,
-    zap.AddStacktrace(mylog.ErrorLevel),
-    zap.Hooks(),
-  )
 }
 
 // 从文件读取配置

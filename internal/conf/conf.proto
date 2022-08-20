@@ -85,18 +85,23 @@ message Log {
     FileLog default = 1;
     // 错误日志文件
     FileLog error = 2;
-    // 是否为调试模式
-    bool app_debug = 10;
+    // 日志文件路径
+    string path = 3;
 
     enum TextFormat {
         JSON = 0;
         CONSOLE = 1;
     }
 
-    enum TimePrecision {
-        DEFAULT = 0;
-        MILLISECOND = 1;
-        SECOND = 2;
+    enum TimeFormat {
+        // 2006-01-02T15:04:05.000"
+        MILLIS = 0;
+        // 2006-01-02T15:04:05"
+        SECONDS = 1;
+        // 2006-01-02T15:04:05Z07:00"
+        RFC3339 = 2;
+        //"2006-01-02T15:04:05.999999999Z07:00"
+        RFC3339_NANO = 3;
     }
 
     // 实际日志级别需减1后再使用
@@ -115,8 +120,8 @@ message Log {
         string filename = 2;
         // 日志格式，可选值为 json 或 console
         TextFormat text_format = 3;
-        // 时间戳精度，可选值为 second 或 millisecond
-        TimePrecision time_precision = 4;
+        // 时间戳格式
+        TimeFormat time_format = 4;
         // 单个文件的大小，单位MB
         uint32 max_size = 5;
         // 最大归档文件个数

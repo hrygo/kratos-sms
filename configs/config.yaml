@@ -33,11 +33,12 @@ data:
     write_timeout: 0.2s
 
 log:
+  path: ${LOG_PATH:./logs/}
   default:
     level: 0 # 0 debug, 1 info, 2 warn, 3 error, 4 d_panic, 5 panic, 6 fatal
     filename: all.log
+    time_format: MILLIS
     text_format: JSON
-    time_precision: MILLISECOND
     max_size: 10
     max_backups: 100
     max_age: 7
@@ -45,8 +46,8 @@ log:
   error:
     level: 2
     filename: error.log
+    time_format: RFC3339_NANO
     text_format: CONSOLE
-    time_precision: MILLISECOND
     max_size: 10
     max_backups: 100
     max_age: 7

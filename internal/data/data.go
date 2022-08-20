@@ -24,9 +24,9 @@ type Data struct {
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
+func NewData(bs *conf.Bootstrap, logger log.Logger) (*Data, func(), error) {
+  c := bs.GetData()
   l := log.NewHelper(logger)
-
   if c.GetDatabase().GetDriver() != "mongo" {
     l.Fatal("Only support mongodb driver.")
   }

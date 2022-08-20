@@ -8,17 +8,24 @@ import (
 
   pb "kratos-sms/api/sms/v1"
   "kratos-sms/internal/biz"
+  "kratos-sms/internal/conf"
 )
 
 type SmsService struct {
   pb.UnimplementedSmsServer
   conf config.Config
+  bs   *conf.Bootstrap
   uc   *biz.SmsUseCase
   log  *log.Helper
 }
 
-func NewSmsService(conf config.Config, uc *biz.SmsUseCase, l log.Logger) *SmsService {
-  return &SmsService{conf: conf, uc: uc, log: log.NewHelper(l)}
+func NewSmsService(conf config.Config, bs *conf.Bootstrap, uc *biz.SmsUseCase, logger log.Logger) *SmsService {
+  return &SmsService{
+    conf: conf,
+    bs:   bs,
+    uc:   uc,
+    log:  log.NewHelper(logger),
+  }
 }
 
 func (s *SmsService) TextMessageSend(ctx context.Context, req *pb.TextMessageRequest) (*pb.SendMessageReply, error) {

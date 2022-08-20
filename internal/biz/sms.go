@@ -2,13 +2,14 @@ package biz
 
 import (
   "context"
-  "encoding/json"
   "strings"
   "time"
 
+  "github.com/go-kratos/kratos/v2/config"
   "github.com/go-kratos/kratos/v2/log"
 
   pb "kratos-sms/api/sms/v1"
+  "kratos-sms/internal/conf"
   "kratos-sms/pkg/properties"
 )
 
@@ -19,12 +20,20 @@ type SmsRepo interface {
 }
 
 type SmsUseCase struct {
+  conf config.Config
+  bs   *conf.Bootstrap
   repo SmsRepo
   log  *log.Helper
 }
 
-func NewSmsUseCase(repo SmsRepo, logger log.Logger) *SmsUseCase {
-  return &SmsUseCase{repo: repo, log: log.NewHelper(logger)}
+func NewSmsUseCase(conf config.Config, bs *conf.Bootstrap, repo SmsRepo, logger log.Logger) *SmsUseCase {
+  // TODO   添加日志过滤器，添加配置变更监听者，根据配置变更动态修改过滤器
+  return &SmsUseCase{
+    conf: conf,
+    bs:   bs,
+    repo: repo,
+    log:  log.NewHelper(logger),
+  }
 }
 
 type SmsJournal struct {
@@ -50,6 +59,25 @@ type AsyncResultList struct {
   ReportTime   time.Time `bson:"reportTime,omitempty"`   // 状态报告接收到的时间
   Report       string    `bson:"report,omitempty"`       // 状态报告内容
 
+}
+
+var smsJournalKeys = []string{
+  "Id",
+  "AppId",
+  "Content",
+  "Priority",
+  "AtTime",
+  "Phones",
+  "QueryId",
+  "Code",
+  "Message",
+  "Results",
+  "Auth",
+}
+
+// Keys 返回需要打印到日志中的字段
+func (j *SmsJournal) Keys() []string {
+  return smsJournalKeys
 }
 
 type SmsTemplate struct {
@@ -85,18 +113,17 @@ func (st *SmsTemplate) Allowed() (allow bool) {
 // SendSmsWithJournal 由Service层调用该方法
 func (uc *SmsUseCase) SendSmsWithJournal(ctx context.Context, req *pb.TextMessageRequest) (*pb.SendMessageReply, error) {
   // 1. 调用短信网关的接口发送短信
-  logTxt, _ := json.Marshal(req)
-  uc.log.WithContext(ctx).Debugw("text_sms_request", string(logTxt))
-  // send result to journal
   jo := &SmsJournal{}
   properties.Copy(req, jo)
+  jo.AtTime = req.AtTime.AsTime()
+  uc.log.WithContext(ctx).Debugw(properties.KVPairs(jo)...)
 
   // 2. 发送结果入库（异步）
   journal, err := uc.repo.SaveJournal(ctx, jo)
   if err != nil {
     return nil, err
   }
-  uc.log.WithContext(ctx).Debugf("save journal: %v", journal)
+  uc.log.WithContext(ctx).Debugw(properties.KVPairs(journal)...)
 
   // 3. 返回发送结果给service层
   reply := &pb.SendMessageReply{

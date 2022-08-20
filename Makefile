@@ -76,6 +76,7 @@ set-env:
 clean-env:
 	docker-compose -f deploy/db/mongo/docker-compose.yaml down ; \
   pkill consul ; \
+  rm -rf ./logs ; \
 #  brew services stop etcd ;
 
 # show help

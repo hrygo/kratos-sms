@@ -5,6 +5,7 @@ import (
   "io"
   "os"
   "strings"
+  "sync"
   "time"
 
   "github.com/go-kratos/kratos/v2/log"
@@ -16,6 +17,7 @@ import (
 )
 
 var _ log.Logger = (*Logger)(nil)
+var once sync.Once
 var bootstrap *conf.Bootstrap
 
 type Logger struct {
@@ -49,16 +51,20 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
       key = fmt.Sprint(pairs[i])
     }
     value, ok = pairs[i+1].(string)
-    if !ok {
-      value = fmt.Sprint(pairs[i+1])
-    }
     if bootstrap.AppDebug {
+      if !ok {
+        value = fmt.Sprint(pairs[i+1])
+      }
       sb.WriteString(key)
-      sb.WriteByte('=')
+      sb.WriteString("=\"")
       sb.WriteString(value)
-      sb.WriteByte('\t')
+      sb.WriteString("\"\t")
     } else {
-      data = append(data, zap.String(key, value))
+      if ok {
+        data = append(data, zap.String(key, value))
+      } else {
+        data = append(data, zap.Any(key, pairs[i+1]))
+      }
     }
   }
 
@@ -97,60 +103,55 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
   return nil
 }
 
-// 使用注意事项：
-// 1. 环境变量 CONF_LOG_TIME_FORMAT 用于设置日期格式，默认为: 2006-01-02T15:04:05.000
-// 2. 生产环境日志策略需调用 ProductionDefault 来设置，或者参照此方法根据需要自己修改合适的日志参数
-// 3. 使用 ProductionDefault 进行生产环境日志设置时，环境变量 CONF_LOG_PATH 用于设置日志路径，默认为执行程序的当前目录下的logs目录
+var std = New(os.Stdout, DebugLevel, conf.Log_RFC3339, WithCaller(false), zap.AddStacktrace(ErrorLevel))
+var defaultLogger = &Logger{std}
 
-type Level = zapcore.Level
-
-type Field = zap.Field
-
-var std = New(os.Stdout, DebugLevel, WithCaller(false), zap.AddStacktrace(ErrorLevel))
-
-// ProductionDefault 设置默认生产日志策略
-// 参照此方法根据需要自己修改合适的日志参数, 编写自己的初始化方法
-func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
-  bootstrap = bs
-  // Debug 模式如果开启，不接受自定义配置
-  if bs.AppDebug {
-    ResetDefault(New(os.Stdout, DebugLevel, WithCaller(false), zap.AddStacktrace(ErrorLevel)))
-    return
-  }
-  var defaultLog = bs.Log.Default
-  var errorLog = bs.Log.Error
-  var tops = []TeeOption{
-    {
-      Filename:      BasePath() + defaultLog.Filename,
-      TextFormat:    defaultLog.TextFormat,
-      TimePrecision: defaultLog.TimePrecision,
-      Ropt: RotateOptions{
-        MaxSize:    defaultLog.MaxSize,
-        MaxAge:     defaultLog.MaxAge,
-        MaxBackups: defaultLog.MaxBackups,
-        Compress:   defaultLog.Compress,
-      },
-      Level: level(defaultLog.Level),
-    },
-    {
-      Filename:      BasePath() + errorLog.Filename,
-      TextFormat:    errorLog.TextFormat,
-      TimePrecision: errorLog.TimePrecision,
-      Ropt: RotateOptions{
-        MaxSize:    errorLog.MaxSize,
-        MaxAge:     errorLog.MaxAge,
-        MaxBackups: errorLog.MaxBackups,
-        Compress:   errorLog.Compress,
-      },
-      Level: level(errorLog.Level),
-    },
-  }
-
-  logger := NewTeeWithRotate(tops, opts...)
-  ResetDefault(logger)
+func Default() *Logger {
+  return defaultLogger
 }
 
-type Option = zap.Option
+// ProductionDefault 设置默认生产日志策略
+func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
+  // 日志仅初始化一次
+  once.Do(func() {
+    bootstrap = bs
+    // Debug 模式如果开启，不接受自定义配置
+    if bs.AppDebug {
+      ResetDefault(New(os.Stdout, DebugLevel, conf.Log_RFC3339, WithCaller(false), zap.AddStacktrace(ErrorLevel)))
+      return
+    }
+    var defaultLog = bs.Log.Default
+    var errorLog = bs.Log.Error
+    var tops = []TeeOption{
+      {
+        Filename:   bs.Log.Path + defaultLog.Filename,
+        TimeFormat: defaultLog.TimeFormat,
+        TextFormat: defaultLog.TextFormat,
+        Ropt: RotateOptions{
+          MaxSize:    defaultLog.MaxSize,
+          MaxAge:     defaultLog.MaxAge,
+          MaxBackups: defaultLog.MaxBackups,
+          Compress:   defaultLog.Compress,
+        },
+        Level: level(defaultLog.Level),
+      },
+      {
+        Filename:   bs.Log.Path + errorLog.Filename,
+        TimeFormat: errorLog.TimeFormat,
+        TextFormat: errorLog.TextFormat,
+        Ropt: RotateOptions{
+          MaxSize:    errorLog.MaxSize,
+          MaxAge:     errorLog.MaxAge,
+          MaxBackups: errorLog.MaxBackups,
+          Compress:   errorLog.Compress,
+        },
+        Level: level(errorLog.Level),
+      },
+    }
+    logger := NewTeeWithRotate(tops, opts...)
+    ResetDefault(logger)
+  })
+}
 
 type RotateOptions struct {
   MaxSize    uint32 // 单个文件最大大小, 单位MB
@@ -160,11 +161,11 @@ type RotateOptions struct {
 }
 
 type TeeOption struct {
-  Filename      string                 // 日志文件名
-  TimePrecision conf.Log_TimePrecision // 记录日志时，相关的时间精度，该参数选项：SECOND、MILLISECOND，分别表示 秒 和 毫秒 ,默认为毫秒级别
-  TextFormat    conf.Log_TextFormat    // 日志文本格式 console or json
-  Ropt          RotateOptions          // 日志分隔轮转配置
-  Level         zapcore.LevelEnabler   // 日志级别生效级别
+  Filename   string               // 日志文件名
+  TextFormat conf.Log_TextFormat  // 日志文本格式 console or json
+  TimeFormat conf.Log_TimeFormat  // 记录日志时，时间戳格式
+  Ropt       RotateOptions        // 日志分隔轮转配置
+  Level      zapcore.LevelEnabler // 日志级别生效级别
 }
 
 func NewTeeWithRotate(tops []TeeOption, opts ...Option) *zap.Logger {
@@ -178,7 +179,7 @@ func NewTeeWithRotate(tops []TeeOption, opts ...Option) *zap.Logger {
     top := top
     // TimePrecision
     cfg.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-      timeFormat(top.TimePrecision, &t, enc)
+      timeFormat(top.TimeFormat, &t, enc)
     }
     // TextFormat
     encoder := zapcore.NewJSONEncoder(cfg.EncoderConfig)
@@ -202,13 +203,13 @@ func NewTeeWithRotate(tops []TeeOption, opts ...Option) *zap.Logger {
 }
 
 // New create a new logger (not support log rotating).
-func New(writer io.Writer, level Level, opts ...Option) *zap.Logger {
+func New(writer io.Writer, level Level, tf conf.Log_TimeFormat, opts ...Option) *zap.Logger {
   if writer == nil {
     panic("the writer is nil")
   }
   cfg := zap.NewProductionConfig()
   cfg.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-    timeFormat(conf.Log_MILLISECOND, &t, enc)
+    timeFormat(tf, &t, enc)
   }
   cfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
   cfg.EncoderConfig.TimeKey = "ts"
@@ -222,35 +223,11 @@ func New(writer io.Writer, level Level, opts ...Option) *zap.Logger {
   return zap.New(core, opts...)
 }
 
-func BasePath() (path string) {
-  path = os.Getenv("CONF_LOG_PATH")
-  if len(path) == 0 {
-    path = "logs/"
-    return
-  }
-  if !strings.HasSuffix(path, "/") {
-    path += "/"
-  }
-  return
-}
-
-func Sync() {
-  if std != nil {
-    _ = std.Sync()
-  }
-}
-
-var defaultLogger = &Logger{std}
-
-func Default() *Logger {
-  return defaultLogger
-}
-
 // ResetDefault not safe for concurrent use
 func ResetDefault(l *zap.Logger) {
   Sync()
   std = l
-  defaultLogger.log = std
+  defaultLogger.log = l
 
   Info = std.Info
   Warn = std.Warn
@@ -269,26 +246,31 @@ func ResetDefault(l *zap.Logger) {
   Debugf = std.Sugar().Debugf
 }
 
-// 根据 TextFormat 参数 或 环境变量 LOG_TIME_FORMAT 的值来设置日期格式
-func timeFormat(tf conf.Log_TimePrecision, t *time.Time, enc zapcore.PrimitiveArrayEncoder) {
-  if tf > 0 {
-    if tf == conf.Log_SECOND {
-      enc.AppendString(t.Format("2006-01-02T15:04:05"))
-    } else {
-      // default
-      enc.AppendString(t.Format("2006-01-02T15:04:05.000"))
-    }
-    // 只要该参数不为空，就采用上述两种格式之一
-    return
+func Sync() {
+  if std != nil {
+    _ = std.Sync()
   }
-  str := os.Getenv("CONF_LOG_TIME_FORMAT")
-  if len(str) == 0 {
-    // default
-    enc.AppendString(t.Format("2006-01-02T15:04:05.000"))
-  } else {
-    // custom
-    enc.AppendString(t.Format(str))
+}
+
+const (
+  TfMillis  = "2006-01-02T15:04:05.000"
+  TfSeconds = "2006-01-02T15:04:05.000"
+)
+
+func timeFormat(tf conf.Log_TimeFormat, t *time.Time, enc zapcore.PrimitiveArrayEncoder) {
+  var format = TfMillis
+  switch tf {
+  case conf.Log_MILLIS:
+    format = TfMillis
+  case conf.Log_SECONDS:
+    format = TfSeconds
+  case conf.Log_RFC3339:
+    format = time.RFC3339
+  case conf.Log_RFC3339_NANO:
+    format = time.RFC3339Nano
+  default:
   }
+  enc.AppendString(t.Format(format))
 }
 
 // map config level to zap level

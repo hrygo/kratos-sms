@@ -4,23 +4,29 @@ import (
   "context"
   "time"
 
+  "github.com/go-kratos/kratos/v2/config"
   "github.com/go-kratos/kratos/v2/log"
   "go.mongodb.org/mongo-driver/bson/primitive"
   "go.mongodb.org/mongo-driver/mongo"
 
   "kratos-sms/internal/biz"
+  "kratos-sms/internal/conf"
 )
 
 var _ biz.SmsRepo = (*smsRepo)(nil)
 
 type smsRepo struct {
+  conf config.Config
+  bs   *conf.Bootstrap
   data *Data
   log  *log.Helper
 }
 
 // NewSmsRepo .
-func NewSmsRepo(data *Data, logger log.Logger) biz.SmsRepo {
+func NewSmsRepo(conf config.Config, bs *conf.Bootstrap, data *Data, logger log.Logger) biz.SmsRepo {
   return &smsRepo{
+    conf: conf,
+    bs:   bs,
     data: data,
     log:  log.NewHelper(logger),
   }
