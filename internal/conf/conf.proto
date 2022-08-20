@@ -32,7 +32,10 @@ message Server {
 message Data {
     message Database {
         string driver = 1;
+        // protocol host url etc.
         string source = 2;
+        // MongoDB 数据库的专有配置
+        Mongo mongo = 10;
     }
     message Redis {
         string network = 1;
@@ -42,6 +45,39 @@ message Data {
     }
     Database database = 1;
     Redis redis = 2;
+}
+
+message Mongo {
+    google.protobuf.Duration connect_timeout = 1;
+    google.protobuf.Duration heartbeat_interval = 2;
+    uint32 min_pool_size = 3;
+    uint32 max_pool_size = 4;
+    // The read concern to use for read operations. e.g. majority, default to 1
+    string read_concern = 5;
+    //  ReadPrefMode indicates the user's preference on reads.
+    ReadPrefMode read_prefer_mode = 6;
+
+    enum ReadPrefMode {
+        NONE = 0;
+        // PrimaryMode indicates that only a primary is
+        // considered for reading. This is the default
+        // mode.
+        PRIMARY = 1;
+        // PrimaryPreferredMode indicates that if a primary
+        // is available, use it; otherwise, eligible
+        // secondaries will be considered.
+        PRIMARY_PREFERRED = 2;
+        // SecondaryMode indicates that only secondaries
+        // should be considered.
+        SECONDARY = 3;
+        // SecondaryPreferredMode indicates that only secondaries
+        // should be considered when one is available. If none
+        // are available, then a primary will be considered.
+        SECONDARY_PREFERRED = 4;
+        // NearestMode indicates that all primaries and secondaries
+        // will be considered.
+        NEAREST = 5;
+    }
 }
 
 message Log {

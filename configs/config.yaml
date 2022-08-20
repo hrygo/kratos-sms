@@ -14,10 +14,19 @@ server:
   grpc:
     addr: 0.0.0.0:9000
     timeout: 1s
+
 data:
   database:
-    driver: mysql
-    source: root:root@tcp(127.0.0.1:3306)/test
+    driver: mongo
+    # user and passwd set into env variable：KRATOS_MONGO_USER, KRATOS_MONGO_PASSWD
+    source: mongodb://${MONGO_USER:admin}:${MONGO_PASSWD:admin}@mongodb_1:27017,mongodb_1:27018,mongodb_1:27019/?authSource=admin
+    mongo:
+      connect_timeout: 1s
+      heartbeat_interval: 60s
+      min_pool_size: 2
+      max_pool_size: 10
+      read_concern: majority
+      read_prefer_mode: SECONDARY_PREFERRED
   redis:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
@@ -26,18 +35,18 @@ data:
 log:
   default:
     level: 0 # 0 debug, 1 info, 2 warn, 3 error, 4 d_panic, 5 panic, 6 fatal
-    filename: "all.log"
-    text_format: "JSON"
-    time_precision: "MILLISECOND"
+    filename: all.log
+    text_format: JSON
+    time_precision: MILLISECOND
     max_size: 10
     max_backups: 100
     max_age: 7
     compress: true
   error:
     level: 2
-    filename: "error.log"
-    text_format: "CONSOLE"
-    time_precision: "MILLISECOND"
+    filename: error.log
+    text_format: CONSOLE
+    time_precision: MILLISECOND
     max_size: 10
     max_backups: 100
     max_age: 7

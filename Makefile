@@ -67,16 +67,16 @@ all:
 .PHONY: set-env
 # setup db and cache in docker
 set-env:
-	docker-compose -f deploy/db/docker-compose.yaml up -d ; \
-  brew services restart consul ; echo "http://localhost:8500/ui" ;  \
-  brew services restart etcd ;
+	docker-compose -f deploy/db/mongo/docker-compose.yaml up -d ; \
+  sh ./deploy/consul/start.sh ; \
+#  brew services restart etcd ;
 
 .PHONY: clean-env
 # stop containers
 clean-env:
-	docker-compose -f deploy/db/docker-compose.yaml down ; \
-  brew services stop consul ; \
-  brew services stop etcd ;
+	docker-compose -f deploy/db/mongo/docker-compose.yaml down ; \
+  pkill consul ; \
+#  brew services stop etcd ;
 
 # show help
 help:

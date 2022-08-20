@@ -17,7 +17,7 @@ type SmsRepo interface {
 }
 
 type SmsJournal struct {
-  Id       uint64             // ID
+  Id       string             // ID
   AppId    string             // 服务端分配的AppId
   Content  string             // 消息内容
   Priority int32              // 消息优先级

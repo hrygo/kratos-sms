@@ -7,6 +7,7 @@ import (
   "github.com/go-kratos/kratos/contrib/config/consul/v2"
   "github.com/go-kratos/kratos/v2"
   "github.com/go-kratos/kratos/v2/config"
+  "github.com/go-kratos/kratos/v2/config/env"
   "github.com/go-kratos/kratos/v2/config/file"
   "github.com/go-kratos/kratos/v2/log"
   "github.com/go-kratos/kratos/v2/middleware/tracing"
@@ -116,6 +117,7 @@ func customLogger(c config.Config, bs *conf.Bootstrap) log.Logger {
   return logger
 }
 
+// 如果开启了调试模式，重置不会生效
 func resetLogger(bs *conf.Bootstrap) {
   mylog.ProductionDefault(bs,
     zap.AddStacktrace(mylog.ErrorLevel),
@@ -127,6 +129,8 @@ func resetLogger(bs *conf.Bootstrap) {
 func fileConfig() (config.Config, *conf.Bootstrap, func()) {
   c := config.New(
     config.WithSource(
+      // 添加前缀为 KRATOS_ 的环境变量
+      env.NewSource("KRATOS_"),
       file.NewSource(confPath),
     ),
   )
@@ -166,7 +170,11 @@ func consulConfig(cc *conf.Consul) (config.Config, *conf.Bootstrap, func()) {
   if err != nil {
     panic(err)
   }
-  c := config.New(config.WithSource(cs))
+  c := config.New(config.WithSource(
+    // 添加前缀为 KRATOS_ 的环境变量
+    env.NewSource("KRATOS_"),
+    cs,
+  ))
 
   if err := c.Load(); err != nil {
     panic(err)

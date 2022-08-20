@@ -16,6 +16,7 @@ import (
 )
 
 var _ log.Logger = (*Logger)(nil)
+var bootstrap *conf.Bootstrap
 
 type Logger struct {
   log *zap.Logger
@@ -34,6 +35,10 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
   var data []zap.Field
   var key, value string
   var ok bool
+  var sb strings.Builder
+  if bootstrap.AppDebug {
+    sb.Grow(256)
+  }
   for i := 0; i < len(pairs); i += 2 {
     key, ok = pairs[i].(string)
     if !ok {
@@ -43,20 +48,47 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
     if !ok {
       value = fmt.Sprint(pairs[i+1])
     }
-    data = append(data, zap.String(key, value))
+    if bootstrap.AppDebug {
+      sb.WriteString(key)
+      sb.WriteString("=\"")
+      sb.WriteString(value)
+      sb.WriteString("\"\t")
+    } else {
+      data = append(data, zap.String(key, value))
+    }
   }
 
   switch level {
   case log.LevelDebug:
-    l.log.Debug("-", data...)
+    if bootstrap.AppDebug {
+      l.log.Debug(sb.String())
+    } else {
+      l.log.Debug("-", data...)
+    }
   case log.LevelInfo:
-    l.log.Info("-", data...)
+    if bootstrap.AppDebug {
+      l.log.Info(sb.String())
+    } else {
+      l.log.Info("-", data...)
+    }
   case log.LevelWarn:
-    l.log.Warn("-", data...)
+    if bootstrap.AppDebug {
+      l.log.Warn(sb.String())
+    } else {
+      l.log.Warn("-", data...)
+    }
   case log.LevelError:
-    l.log.Error("-", data...)
+    if bootstrap.AppDebug {
+      l.log.Error(sb.String())
+    } else {
+      l.log.Error("-", data...)
+    }
   case log.LevelFatal:
-    l.log.Fatal("-", data...)
+    if bootstrap.AppDebug {
+      l.log.Fatal(sb.String())
+    } else {
+      l.log.Fatal("-", data...)
+    }
   }
   return nil
 }
@@ -78,7 +110,9 @@ var std = New(os.Stdout, DebugLevel, WithCaller(false), zap.AddStacktrace(ErrorL
 
 // ProductionDefault 设置默认生产日志策略
 // 参照此方法根据需要自己修改合适的日志参数, 编写自己的初始化方法
-func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
+func ProductionDefault(bs *conf.Bootstrap, opts ...
+  Option) {
+  bootstrap = bs
   // Debug 模式如果开启，不接受自定义配置
   if bs.AppDebug {
     ResetDefault(New(os.Stdout, DebugLevel, WithCaller(false), zap.AddStacktrace(ErrorLevel)))
@@ -184,7 +218,7 @@ func New(writer io.Writer, level Level, opts ...Option) *zap.Logger {
   cfg.EncoderConfig.MessageKey = "_zap"
 
   core := zapcore.NewCore(
-    zapcore.NewJSONEncoder(cfg.EncoderConfig),
+    zapcore.NewConsoleEncoder(cfg.EncoderConfig),
     zapcore.AddSync(writer),
     level,
   )
