@@ -17,18 +17,18 @@ paths:
                   description: 查询编号
                   required: true
                   schema:
-                    type: integer
-                    format: uint64
+                      type: integer
+                      format: uint64
                 - name: auth.appId
                   in: query
                   description: AppId
                   schema:
-                    type: string
+                      type: string
                 - name: auth.token
                   in: query
                   description: AppId对应的访问令牌
                   schema:
-                    type: string
+                      type: string
             responses:
                 "200":
                     description: OK
