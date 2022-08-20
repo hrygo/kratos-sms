@@ -31,14 +31,18 @@ func (l Logger) Log(level log.Level, pairs ...interface{}) error {
     l.log.Warn(fmt.Sprint("log fields must appear in pairs: ", pairs))
     return nil
   }
+  // Struct format
   // Zap.Field is used when key-val pairs appear
   var data []zap.Field
   var key, value string
   var ok bool
+
+  // Console format
   var sb strings.Builder
   if bootstrap.AppDebug {
     sb.Grow(256)
   }
+
   for i := 0; i < len(pairs); i += 2 {
     key, ok = pairs[i].(string)
     if !ok {
@@ -121,7 +125,6 @@ func ProductionDefault(bs *conf.Bootstrap, opts ...
   var defaultLog = bs.Log.Default
   var errorLog = bs.Log.Error
   var tops = []TeeOption{
-    // 默认JSON格式
     {
       Filename:      BasePath() + defaultLog.Filename,
       TextFormat:    defaultLog.TextFormat,
@@ -132,9 +135,8 @@ func ProductionDefault(bs *conf.Bootstrap, opts ...
         MaxBackups: defaultLog.MaxBackups,
         Compress:   defaultLog.Compress,
       },
-      Level: Level(defaultLog.Level - 1),
+      Level: level(defaultLog.Level),
     },
-    // 设置为console格式
     {
       Filename:      BasePath() + errorLog.Filename,
       TextFormat:    errorLog.TextFormat,
@@ -145,7 +147,7 @@ func ProductionDefault(bs *conf.Bootstrap, opts ...
         MaxBackups: errorLog.MaxBackups,
         Compress:   errorLog.Compress,
       },
-      Level: Level(errorLog.Level - 1),
+      Level: level(errorLog.Level),
     },
   }
 
@@ -284,4 +286,21 @@ func timeFormat(tf conf.Log_TimePrecision, t *time.Time, enc zapcore.PrimitiveAr
     // custom
     enc.AppendString(t.Format(str))
   }
+}
+
+// map config level to zap level
+func level(l conf.Log_Level) Level {
+  switch l {
+  case conf.Log_DEBUG:
+    return zapcore.DebugLevel
+  case conf.Log_INFO:
+    return zapcore.InfoLevel
+  case conf.Log_WARN:
+    return zapcore.WarnLevel
+  case conf.Log_ERROR:
+    return zapcore.ErrorLevel
+  case conf.Log_FATAL:
+    return zapcore.FatalLevel
+  }
+  return zapcore.DebugLevel
 }

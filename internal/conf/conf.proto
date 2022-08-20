@@ -105,10 +105,7 @@ message Log {
         INFO = 1;
         WARN = 2;
         ERROR = 3;
-        // PanicLevel used in development log
-        D_PANIC = 4;
-        PANIC = 5;
-        FATAL = 6;
+        FATAL = 4;
     }
 
     message FileLog {
