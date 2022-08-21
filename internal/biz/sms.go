@@ -26,14 +26,34 @@ type SmsUseCase struct {
   log  *log.Helper
 }
 
-func NewSmsUseCase(conf config.Config, bs *conf.Bootstrap, repo SmsRepo, logger log.Logger) *SmsUseCase {
-  // TODO   添加日志过滤器，添加配置变更监听者，根据配置变更动态修改过滤器
-  return &SmsUseCase{
-    conf: conf,
+func NewSmsUseCase(cc config.Config, bs *conf.Bootstrap, repo SmsRepo, logger log.Logger) *SmsUseCase {
+  if bs.Log.Filter == nil {
+    log.Fatal("Configuration `bs.log.filter` can't be nil.")
+  }
+  levelFilter := log.FilterLevel(log.Level(bs.Log.Filter.BizLogLevel - 1))
+  keyFilter := log.FilterKey("username", "password", "passwd", "pwd", "phone", "phones")
+  filter := log.NewFilter(logger, keyFilter, levelFilter)
+
+  uc := &SmsUseCase{
+    conf: cc,
     bs:   bs,
     repo: repo,
-    log:  log.NewHelper(logger),
+    log:  log.NewHelper(filter),
   }
+  // 根据配置变更动态修改过滤器级别
+  _ = cc.Watch("log.filter.biz_log_level", func(s string, value config.Value) {
+    var lvl conf.Log_Level
+    err := value.Scan(&lvl)
+    if err != nil {
+      log.Error(err)
+      return
+    }
+    filter := log.NewFilter(logger, keyFilter, log.FilterLevel(log.Level(lvl-1)))
+    uc.log = log.NewHelper(filter)
+    uc.log.Warnf("SmsUseCase.log's level changed to `%s`", lvl.String())
+  })
+
+  return uc
 }
 
 type SmsJournal struct {
@@ -112,6 +132,12 @@ func (st *SmsTemplate) Allowed() (allow bool) {
 
 // SendSmsWithJournal 由Service层调用该方法
 func (uc *SmsUseCase) SendSmsWithJournal(ctx context.Context, req *pb.TextMessageRequest) (*pb.SendMessageReply, error) {
+  // 0. debug DynamicLeverFilter
+  uc.log.Debug("Debug hello.")
+  uc.log.Info("Info hello.")
+  uc.log.Warn("Warn hello.")
+  uc.log.Error("Error hello.")
+
   // 1. 调用短信网关的接口发送短信
   jo := &SmsJournal{}
   properties.Copy(req, jo)

@@ -87,6 +87,8 @@ message Log {
     FileLog error = 2;
     // 日志文件路径
     string path = 3;
+    // 动态日志过滤级别设置
+    DynamicLeverFilter filter = 4;
 
     enum TextFormat {
         JSON = 0;
@@ -104,7 +106,7 @@ message Log {
         RFC3339_NANO = 3;
     }
 
-    // 实际日志级别需减1后再使用
+    // 日志级别转换为 Kratos Log.Level 时需减 1
     enum Level {
         DEBUG = 0;
         INFO = 1;
@@ -130,6 +132,15 @@ message Log {
         uint32 max_age = 7;
         // 是否启用压缩
         bool compress = 8;
+    }
+
+    message DynamicLeverFilter {
+        // biz 层日志过滤级别
+        Level biz_log_level = 1;
+        // data 层日志过滤级别
+        Level data_log_level = 2;
+        // service 层日志过滤级别
+        Level service_log_level = 3;
     }
 }
 

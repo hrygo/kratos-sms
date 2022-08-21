@@ -12,7 +12,7 @@ type Field = zap.Field
 type Option = zap.Option
 
 const (
-  InfoLevel   = zap.InfoLevel   // 0, default level
+  InfoLevel   = zap.InfoLevel   // 0, default LevelMapper
   WarnLevel   = zap.WarnLevel   // 1
   ErrorLevel  = zap.ErrorLevel  // 2
   DPanicLevel = zap.DPanicLevel // 3, PanicLevel used in development log

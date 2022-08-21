@@ -23,9 +23,9 @@ type smsRepo struct {
 }
 
 // NewSmsRepo .
-func NewSmsRepo(conf config.Config, bs *conf.Bootstrap, data *Data, logger log.Logger) biz.SmsRepo {
+func NewSmsRepo(cc config.Config, bs *conf.Bootstrap, data *Data, logger log.Logger) biz.SmsRepo {
   return &smsRepo{
-    conf: conf,
+    conf: cc,
     bs:   bs,
     data: data,
     log:  log.NewHelper(logger),

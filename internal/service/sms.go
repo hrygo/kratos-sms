@@ -19,9 +19,9 @@ type SmsService struct {
   log  *log.Helper
 }
 
-func NewSmsService(conf config.Config, bs *conf.Bootstrap, uc *biz.SmsUseCase, logger log.Logger) *SmsService {
+func NewSmsService(cc config.Config, bs *conf.Bootstrap, uc *biz.SmsUseCase, logger log.Logger) *SmsService {
   return &SmsService{
-    conf: conf,
+    conf: cc,
     bs:   bs,
     uc:   uc,
     log:  log.NewHelper(logger),

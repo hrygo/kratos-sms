@@ -114,11 +114,11 @@ func observerDebugMode(bs *conf.Bootstrap) func(key string, value config.Value) 
   return func(key string, value config.Value) {
     mode, err := value.Bool()
     if err != nil {
-      mylog.Errorf(err.Error())
+      log.Error(err)
       return
     }
     bs.AppDebug = mode
-    mylog.Warnf("App debug mode changed to %v!", mode)
+    log.Warnf("App debug mode changed to %v!", mode)
     // TODO MORE
   }
 }

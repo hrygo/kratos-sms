@@ -145,7 +145,7 @@ func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
           MaxBackups: defaultLog.MaxBackups,
           Compress:   defaultLog.Compress,
         },
-        Level: level(defaultLog.Level),
+        Level: LevelMapper(defaultLog.Level),
       },
       {
         Filename:   bs.Log.Path + errorLog.Filename,
@@ -157,7 +157,7 @@ func ProductionDefault(bs *conf.Bootstrap, opts ...Option) {
           MaxBackups: errorLog.MaxBackups,
           Compress:   errorLog.Compress,
         },
-        Level: level(errorLog.Level),
+        Level: LevelMapper(errorLog.Level),
       },
     }
     logger := NewTeeWithRotate(tops, opts...)
@@ -285,8 +285,8 @@ func timeFormat(tf conf.Log_TimeFormat, t *time.Time, enc zapcore.PrimitiveArray
   enc.AppendString(t.Format(format))
 }
 
-// map config level to zap level
-func level(l conf.Log_Level) Level {
+// LevelMapper map config LevelMapper to zap LevelMapper
+func LevelMapper(l conf.Log_Level) Level {
   switch l {
   case conf.Log_DEBUG:
     return zapcore.DebugLevel
