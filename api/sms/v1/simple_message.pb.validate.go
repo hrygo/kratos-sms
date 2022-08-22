@@ -266,34 +266,32 @@ func (m *TextMessageRequest) validate(all bool) error {
 
 	if m.AtTime != nil {
 
-		if t := m.GetAtTime(); t != nil {
-			ts, err := t.AsTime(), t.CheckValid()
-			if err != nil {
-				err = TextMessageRequestValidationError{
+		if all {
+			switch v := interface{}(m.GetAtTime()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TextMessageRequestValidationError{
+						field:  "AtTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TextMessageRequestValidationError{
+						field:  "AtTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAtTime()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TextMessageRequestValidationError{
 					field:  "AtTime",
-					reason: "value is not a valid timestamp",
+					reason: "embedded message failed validation",
 					cause:  err,
 				}
-				if !all {
-					return err
-				}
-				errors = append(errors, err)
-			} else {
-
-				now := time.Now()
-				within := time.Duration(86400*time.Second + 0*time.Nanosecond)
-
-				if ts.Sub(now) <= 0 || ts.Sub(now.Add(within)) > 0 {
-					err := TextMessageRequestValidationError{
-						field:  "AtTime",
-						reason: "value must be greater than now within 24h0m0s",
-					}
-					if !all {
-						return err
-					}
-					errors = append(errors, err)
-				}
-
 			}
 		}
 
@@ -515,34 +513,32 @@ func (m *TemplateMessageRequest) validate(all bool) error {
 
 	if m.AtTime != nil {
 
-		if t := m.GetAtTime(); t != nil {
-			ts, err := t.AsTime(), t.CheckValid()
-			if err != nil {
-				err = TemplateMessageRequestValidationError{
+		if all {
+			switch v := interface{}(m.GetAtTime()).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, TemplateMessageRequestValidationError{
+						field:  "AtTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, TemplateMessageRequestValidationError{
+						field:  "AtTime",
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(m.GetAtTime()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return TemplateMessageRequestValidationError{
 					field:  "AtTime",
-					reason: "value is not a valid timestamp",
+					reason: "embedded message failed validation",
 					cause:  err,
 				}
-				if !all {
-					return err
-				}
-				errors = append(errors, err)
-			} else {
-
-				now := time.Now()
-				within := time.Duration(86400*time.Second + 0*time.Nanosecond)
-
-				if ts.Sub(now) <= 0 || ts.Sub(now.Add(within)) > 0 {
-					err := TemplateMessageRequestValidationError{
-						field:  "AtTime",
-						reason: "value must be greater than now within 24h0m0s",
-					}
-					if !all {
-						return err
-					}
-					errors = append(errors, err)
-				}
-
 			}
 		}
 

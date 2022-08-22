@@ -148,9 +148,8 @@ components:
                 status:
                     $ref: '#/components/schemas/sms.v1.ReplyStatus'
                 queryId:
-                    type: integer
-                    description: 用于异步查询结果的查询编号，当code为零时值为0
-                    format: uint64
+                    type: string
+                    description: 用于异步查询结果的查询编号
             description: 发送消息的同步应答消息
         sms.v1.TemplateMessageRequest:
             type: object

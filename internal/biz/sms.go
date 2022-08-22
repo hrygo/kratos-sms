@@ -143,7 +143,7 @@ func (uc *SmsUseCase) SendSmsWithJournal(ctx context.Context, req *pb.TextMessag
 
 	// 3. 返回发送结果给service层
 	reply := &pb.SendMessageReply{
-		QueryId: 1,
+		QueryId: "0123456789abcdef",
 		Status: &pb.ReplyStatus{
 			Code:    200,
 			Message: "SUCCESS",

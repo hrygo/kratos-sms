@@ -49,9 +49,7 @@ message TextMessageRequest {
     // 消息优先级
     int32 priority = 3 [(validate.rules).int32 = {gte: 0, lte: 9}];
     // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
-    optional google.protobuf.Timestamp at_time = 4 [
-        (validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}
-    ];
+    optional google.protobuf.Timestamp at_time = 4; //[(validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}];
     // 手机号列表
     repeated string phones = 10 [
         (validate.rules).repeated = {unique: true, min_items: 1, max_items: 99}
@@ -65,9 +63,7 @@ message TemplateMessageRequest {
     // 模板编号,如 "T00001", "TUOS01" 等
     string template_id = 2 [(validate.rules).string.len = 6];
     // 定时发送时间 （时间戳, 大于当前时间, 24小时以内）
-    optional google.protobuf.Timestamp at_time = 3 [
-        (validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}
-    ];
+    optional google.protobuf.Timestamp at_time = 3;//[(validate.rules).timestamp = {gt_now: true, within: {seconds: 86400}}];
     // 手机号列表
     repeated string phones = 10 [
         (validate.rules).repeated = {unique: true, min_items: 1, max_items: 99}
@@ -102,8 +98,8 @@ message ReplyStatus {
 message SendMessageReply {
     // 响应消息头
     ReplyStatus status = 1;
-    // 用于异步查询结果的查询编号，当code为零时值为0
-    uint64 query_id = 2;
+    // 用于异步查询结果的查询编号
+    string query_id = 2;
 }
 
 // 查询结果
