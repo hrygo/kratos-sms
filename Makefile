@@ -39,16 +39,20 @@ api:
  	       --go_out=paths=source_relative:./api \
  	       --go-http_out=paths=source_relative:./api \
  	       --go-grpc_out=paths=source_relative:./api \
+ 	      --go-errors_out=paths=source_relative:./api \
  	       --validate_out=paths=source_relative,lang=go:./api \
 	       --openapi_out=fq_schema_naming=true,default_response=false:. \
 	       $(API_PROTO_FILES)
-#--openapi_out=fq_schema_naming=true,default_response=false,naming=proto:. \
+# 设置生成的openapi yaml文件使用的字段格式
+# --openapi_out=fq_schema_naming=true,default_response=false,naming=proto:. \
+# main 函数的 init 中同样配置json encoder 增加 naming=proto
 
 .PHONY: build
 # build
 build:
 	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./... ; \
   cp -rf configs bin/
+# mkdir -p bin/ && go build -trimpath -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./... ; \
 
 .PHONY: generate
 # generate

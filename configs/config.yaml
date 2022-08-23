@@ -35,7 +35,7 @@ data:
 log:
   path: ${LOG_PATH:./logs/}
   default:
-    level: 0 # 0 debug, 1 info, 2 warn, 3 error, 4 fatal
+    level: DEBUG # CAN USE NUMBER: 0 DEBUG, 1 INFO, 2 WARN, 3 ERROR, 4 FATAL
     filename: all.log
     time_format: MILLIS
     text_format: JSON
@@ -44,7 +44,7 @@ log:
     max_age: 7
     compress: true
   error:
-    level: 2 # 0 debug, 1 info, 2 warn, 3 error, 4 fatal
+    level: 2  # CAN USE NUMBER: 0 DEBUG, 1 INFO, 2 WARN, 3 ERROR, 4 FATAL
     filename: error.log
     time_format: RFC3339_NANO
     text_format: CONSOLE
@@ -52,7 +52,8 @@ log:
     max_backups: 100
     max_age: 7
     compress: false
-  filter: # 0 debug, 1 info, 2 warn, 3 error, 4 fatal
+  # 除 filter 外, log 的其他配置不支持动态调整, 调整值只能是日志级别对应的数字，否则无法生效
+  filter: # 0 DEBUG, 1 INFO, 2 WARN, 3 ERROR, 4 FATAL
     biz_log_level: 0
     data_log_level: 0
     service_log_level: 0

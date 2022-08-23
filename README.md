@@ -1,62 +1,57 @@
-# Kratos Project Template
+# Kratos-sms
 
-## Install Kratos
+## Quick Start
 
-```
-go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
-```
-
-## Create a service
-
-```
-# Create a template project
-kratos new server
-
-cd server
-go mod download
-go mod tidy
-
-# Add a proto template
-kratos proto add api/server/server.proto
-# Generate the proto code
-kratos proto client api/server/server.proto
-# Generate the source code of service by proto file
-kratos proto server api/server/server.proto -t internal/service
-
-go generate ./...
-go build -o ./bin/ ./...
-./bin/server -conf ./configs
-```
-
-## Generate other auxiliary files by Makefile
-
-```
-# Download and update dependencies
-make init
-# Generate API files (include: pb.go, http, grpc, validate, swagger) by proto file
-make api
-# Generate all files
-make all
-```
-
-## Automated Initialization (wire)
-
-```
-# install wire
-go get github.com/google/wire/cmd/wire
-
-# generate wire
-cd cmd/server
-wire
-```
-
-## Docker
+1、安装kratos
 
 ```bash
-# build
-docker build -t <your-docker-image-name> .
-
-# run
-docker run --rm -p 8000:8000 -p 9000:9000 -v </path/to/your/configs>:/data/conf <your-docker-image-name>
+go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
+kratos upgrade
 ```
+
+2、更新下载依赖
+
+```bash
+cd kratos-sms
+go mod download
+go mod tidy
+```
+
+3、安装环境依赖
+安装 docker、docker-compose、consul
+
+4、重新生成代码保证代码最新
+
+```bash
+make api
+make config
+make generate
+```
+
+5、运行依赖环境
+
+```
+make set-env
+```
+
+6、调试执行应用
+
+```bash
+# 直接执行
+go run cmd/kratos-sms/main.go
+# 或者执行
+kratos run
+```
+
+7、构建可执行程序并运行
+
+```bash
+make build
+
+cd bin
+./kratos-sms --conf ./configs
+```
+
+参考 [Kratos Layout](./Kratos_layout.md) 官方文档
+
 

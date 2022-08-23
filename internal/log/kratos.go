@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/log"
 	"go.uber.org/zap"
@@ -19,8 +20,10 @@ const (
 )
 
 var (
-	_ log.Logger = (*Logger)(nil)
-	// callerColor            = color.New(color.FgHiBlue).Add(color.Underline)
+	_              log.Logger = (*Logger)(nil)
+	headerColor               = color.New(color.FgHiGreen)
+	callerColor               = color.New(color.FgHiBlue).Add(color.Underline).Add()
+	delimiterColor            = color.New(color.FgHiRed)
 )
 
 type Replaceable interface {
@@ -54,21 +57,30 @@ func (l Logger) Log(level log.Level, pairs ...any) error {
 			key = fmt.Sprint(pairs[i])
 		}
 		value, ok = pairs[i+1].(string)
-		if bootstrap.AppDebug {
-			if !ok {
-				value = fmt.Sprint(pairs[i+1])
-			}
-			sb.WriteString(key)
-			sb.WriteString("=")
-			sb.WriteString(value)
-			if i != len(pairs)-2 { // 最后一段不加分隔符
-				sb.WriteString(Separator)
-			}
-		} else {
+		if !bootstrap.AppDebug {
 			if ok {
 				data = append(data, zap.String(key, value))
 			} else {
 				data = append(data, zap.Any(key, pairs[i+1]))
+			}
+		} else {
+			if !ok {
+				value = fmt.Sprint(pairs[i+1])
+			}
+			// 公共日志属性不添加KEY
+			if i > 11 {
+				sb.WriteString(key)
+				sb.WriteString("=")
+			}
+			if i < 10 {
+				value = headerColor.Sprint(value)
+			} else if i == 10 && key == "caller" {
+				value = callerColor.Sprint(value)
+			}
+			sb.WriteString(value)
+			// 最后一段不加分隔符
+			if i != len(pairs)-2 {
+				sb.WriteString(delimiterColor.Sprint(Separator))
 			}
 		}
 	}

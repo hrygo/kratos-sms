@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/metadata"
 
 	pb "kratos-sms/api/sms/v1"
 	"kratos-sms/internal/biz"
@@ -46,6 +47,14 @@ func NewSmsService(cc config.Config, bs *conf.Bootstrap, uc *biz.SmsUseCase, log
 }
 
 func (s *SmsService) TextMessageSend(ctx context.Context, req *pb.TextMessageRequest) (*pb.SendMessageReply, error) {
+	if md, ok := metadata.FromServerContext(ctx); ok {
+		appId := md.Get("x-md-global-app-id")
+		token := md.Get("x-md-global-token")
+		if appId != "0123456789012345" || token != "0123456789012345012345678901234501234567890123450123456789012345" {
+			return nil, pb.ErrorNotFound("auth error")
+		}
+	}
+
 	return s.uc.SendSmsWithJournal(ctx, req)
 }
 func (s *SmsService) TemplateMessageSend(ctx context.Context, req *pb.TemplateMessageRequest) (*pb.SendMessageReply, error) {

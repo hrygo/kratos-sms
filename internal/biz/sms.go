@@ -143,7 +143,7 @@ func (uc *SmsUseCase) SendSmsWithJournal(ctx context.Context, req *pb.TextMessag
 
 	// 3. 返回发送结果给service层
 	reply := &pb.SendMessageReply{
-		QueryId: "0123456789abcdef",
+		QueryId: "0123456789ABCDEF",
 		Status: &pb.ReplyStatus{
 			Code:    200,
 			Message: "SUCCESS",
@@ -156,6 +156,7 @@ func (uc *SmsUseCase) QueryAsyncResults(ctx context.Context, queryId uint64) (*p
 	// 1. 查询数据库，看是否已经有返回结果(可增加二级缓存)
 	journal, err := uc.repo.QueryJournal(ctx, queryId)
 	if err != nil {
+		err := pb.ErrorNotFound("Query DB error: %v", err)
 		return nil, err
 	}
 	uc.log.WithContext(ctx).Debugf("query journal: %v", journal)
